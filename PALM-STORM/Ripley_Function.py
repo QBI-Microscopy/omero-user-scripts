@@ -675,7 +675,9 @@ Do not need to convert Zeiss data to nm. Only use with super resolved images whe
     )
 
     try:
-
+        # this could run for a long time so keepAlive
+        
+        client.enableKeepAlive(1200)
         # process the list of args above.
         scriptParams = {}
         for key in client.getInputKeys():
