@@ -426,6 +426,7 @@ def process_data(conn,script_params,image,file_type,sizeC,rectangles,coords,rmax
             locs_df = coords[c]
             tt = 0
             for t in range(sizeT):
+                conn.keepAlive()
                 coords_in_frames = locs_df[(locs_df[frame]>= starts[t]) & (locs_df[frame]<= stops[t])]
                 locs = get_coords_in_roi(coords_in_frames,rect,file_type)       
                 box = [rect[0],rect[0]+rect[2],rect[1],rect[1]+rect[3]]
@@ -661,7 +662,9 @@ Do not need to convert Zeiss data to nm. Only use with super resolved images whe
     )
 
     try:
-
+        # this could run for a long time so keepAlive
+        client.enableKeepAlive(3600)
+        
         # process the list of args above.
         scriptParams = {}
         for key in client.getInputKeys():
