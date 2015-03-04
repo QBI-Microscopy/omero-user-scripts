@@ -642,7 +642,7 @@ def run_as_script():
     """
     The main entry point of the script, as called by the client via the scripting service, passing the required parameters.
     """
-#     printDuration(False)
+    printDuration(False)
 
     dataTypes = [rstring('Image')]
     
@@ -712,7 +712,7 @@ Do not need to convert Zeiss data to nm. Only use with super resolved images whe
         #client.setOutput("Message", rstring("No plates created. See 'Error' or 'Info' for details"))
     finally:
         client.closeSession()
-#         printDuration()
+        printDuration()
         
 if __name__ == "__main__":
     run_as_script()
