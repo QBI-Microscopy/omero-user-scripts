@@ -468,7 +468,7 @@ def process_data(conn,image,file_type,sizeC,rectangles,coords,rmax):
     @param rmax:          maximum distance scale for Ripley calculation
     
     """    
-    conn.keepAlive()
+
     x = FILE_TYPES[file_type]['x_col']
     y = FILE_TYPES[file_type]['y_col']
     f = FILE_TYPES[file_type]['frame']
@@ -504,6 +504,7 @@ def process_data(conn,image,file_type,sizeC,rectangles,coords,rmax):
         locs_df = coords[c]
         legend = []
         for t in range(sizeT):
+            conn.keepAlive()
             coords_in_frames = locs_df[(locs_df[f]>= starts[t]) & (locs_df[f]<= stops[t])]
             for rect in rectangles:
                 rid = rect[-1]
