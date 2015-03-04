@@ -514,8 +514,10 @@ def process_data(conn,image,file_type,sizeC,rectangles,coords,rmax):
                     ripley_column = 'Ripley L ROI_%s_time0%s' % (rid,t)
                     r_df[ripley_column] = l
                     if t % interval == 0:
+                        s = time.time()
                         plt.plot(r_df.loc[:,['radius']].values,r_df.loc[:,[ripley_column]])
                         legend.append('ROI_%s_timepoint_%s'%(rid,t))
+                        print 'Ripley plot took:',time.time() - s
             ripley_list.append(r_df)
         
     ripley_df = pd.concat(ripley_list).reset_index(drop=True)
