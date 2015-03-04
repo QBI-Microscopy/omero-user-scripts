@@ -398,6 +398,7 @@ def upload_figure(conn, destination):
     sizeZ = 1
     sizeT = 1
     imageName = os.path.basename(destination)
+    print 'imageName',imageName
     # Create a new Image in OMERO, with the jpeg images as a Z-stack.
     # We need a generator to produce numpy planes in the order Z, C, T.
     def plane_generator():
@@ -467,6 +468,7 @@ def process_data(conn,image,file_type,sizeC,rectangles,coords,rmax):
     @param rmax:          maximum distance scale for Ripley calculation
     
     """    
+    conn.keepAlive()
     x = FILE_TYPES[file_type]['x_col']
     y = FILE_TYPES[file_type]['y_col']
     f = FILE_TYPES[file_type]['frame']
@@ -689,8 +691,8 @@ Do not need to convert Zeiss data to nm. Only use with super resolved images whe
 
     try:
         # this could run for a long time so keepAlive
-        
         client.enableKeepAlive(3600)
+        
         # process the list of args above.
         scriptParams = {}
         for key in client.getInputKeys():
