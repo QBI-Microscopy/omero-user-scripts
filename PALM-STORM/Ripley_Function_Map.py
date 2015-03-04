@@ -110,6 +110,13 @@ FILE_TYPES = {
 PATH = tempfile.mkdtemp(prefix='downloads')
 ADMIN_EMAIL = 'admin@omerocloud.qbi.uq.edu.au'
 
+def printDuration(output=True):
+    global startTime
+    if startTime == 0:
+        startTime = time.time()
+    if output:
+        print "Script timer = %s secs" % (time.time() - startTime)
+
 
 def list_image_names(conn, ids, file_anns):
     """
@@ -604,7 +611,8 @@ def run_as_script():
     """
     The main entry point of the script, as called by the client via the scripting service, passing the required parameters.
     """
-
+    printDuration(False)
+    
     dataTypes = [rstring('Image')]
     
     fileTypes = [k for k in FILE_TYPES.iterkeys()]
@@ -676,6 +684,7 @@ Do not need to convert Zeiss data to nm. Only use with super resolved images whe
         
     finally:
         client.closeSession()
-
+        printDuration()
+        
 if __name__ == "__main__":
     run_as_script()
