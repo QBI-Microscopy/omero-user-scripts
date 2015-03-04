@@ -507,9 +507,9 @@ def process_data(conn,image,file_type,sizeC,rectangles,coords,rmax):
                 locs = get_coords_in_roi(coords_in_frames,rect,file_type) 
                 if len(locs.index) > 0:      
                     box = [rect[0],rect[0]+rect[2],rect[1],rect[1]+rect[3]]
-                    s = time.time()
+#                     s = time.time()
                     l = ripleykfunction(locs.loc[:,[x,y]].values,dist_scale,box,0)
-                    print 'Ripley calculation took:', time.time() - s
+#                     print 'Ripley calculation took:', time.time() - s
                     ripley_column = 'Ripley L ROI_%s_time0%s' % (rid,t)
                     r_df[ripley_column] = l
                     if t % interval == 0:
@@ -642,7 +642,7 @@ def run_as_script():
     """
     The main entry point of the script, as called by the client via the scripting service, passing the required parameters.
     """
-    printDuration(False)
+#     printDuration(False)
 
     dataTypes = [rstring('Image')]
     
@@ -712,7 +712,7 @@ Do not need to convert Zeiss data to nm. Only use with super resolved images whe
         #client.setOutput("Message", rstring("No plates created. See 'Error' or 'Info' for details"))
     finally:
         client.closeSession()
-        printDuration()
+#         printDuration()
         
 if __name__ == "__main__":
     run_as_script()
