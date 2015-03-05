@@ -109,6 +109,7 @@ FILE_TYPES = {
 }
 PATH = tempfile.mkdtemp(prefix='downloads')
 ADMIN_EMAIL = 'admin@omerocloud.qbi.uq.edu.au'
+startTime = 0
 
 def printDuration(output=True):
     global startTime
