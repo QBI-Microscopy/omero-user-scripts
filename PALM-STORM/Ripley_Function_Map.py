@@ -110,12 +110,7 @@ FILE_TYPES = {
 PATH = tempfile.mkdtemp(prefix='downloads')
 ADMIN_EMAIL = 'admin@omerocloud.qbi.uq.edu.au'
 
-def printDuration(output=True):
-    global startTime
-    if startTime == 0:
-        startTime = time.time()
-    if output:
-        print "Script timer = %s secs" % (time.time() - startTime)
+
 
 
 def list_image_names(conn, ids, file_anns):
