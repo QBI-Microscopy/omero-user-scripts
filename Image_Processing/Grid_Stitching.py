@@ -193,34 +193,185 @@ def run_imagej_macro(stitching_args):
     """
     print 'stitching args',stitching_args
     
-    stitching_ijm = """
-run("Grid/Collection stitching", "type=[Grid: snake by rows] order=[Right & Down] """\
-"""grid_size_x=%s grid_size_y=%s tile_overlap=%s first_file_index_i=0 """\
-"""directory=[%s] """\
-"""file_names=%s_tile_{i}.tif output_textfile_name=%s """\
-"""fusion_method=[%s] regression_threshold=%s """\
-"""max/avg_displacement_threshold=%s absolute_displacement_threshold=%s """\
-"""compute_overlap computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display] """\
-"""output_directory=[%s]");"""\
-"""run("Bio-Formats Exporter", "save=%s/fused.ome.tif compression=LZW");""" % stitching_args
+    stitching_script = """
+import sys
+import os
+import glob
+import time
+import math
+import shutil
 
-    ijm_path = "stitching.ijm"
+import ij
+from ij import IJ
+
+from loci.formats import ImageReader,ImageWriter
+from loci.formats import MetadataTools
+from loci.common import RandomAccessInputStream
+from loci.common import RandomAccessOutputStream
+from loci.formats.tiff import TiffSaver
+
+from ome.xml.model.primitives import PositiveInteger
+
+    
+def delete_slices(slices_dir):
+    try:
+        for name in glob.glob("{0}img*".format(slices_dir)):
+            os.remove(name)
+    except:
+        pass 
+    
+def write_fused(output_path,channel,sizeZ):
+
+    IJ.log("Writing fused data")
+
+    # number of slices will determine filename format
+    digits = "00"
+    if sizeZ < 100:
+        digits = "0"
+    if sizeZ < 10:
+        digits = ""
+
+    # get the base metadata from the first fused image
+    meta = MetadataTools.createOMEXMLMetadata()
+    reader = get_reader(output_path+"img_t1_z{0}1_c1".format(digits),meta)
+    reader.close()
+    
+    # reset some metadata
+    meta.setPixelsSizeZ(PositiveInteger(sizeZ),0)
+    meta.setChannelID("Channel:0:" + str(0), 0, 0)
+    spp = channel['spp']
+    meta.setChannelSamplesPerPixel(spp, 0, 0)
+    name = channel['name']
+    color = channel['color']
+    meta.setChannelName(name,0,0)
+    meta.setChannelColor(color,0,0)
+        
+    # determine the number of subsets that need to be written
+    slices_per_subset = 200
+    num_output_files = divmod(sizeZ,slices_per_subset)
+    fpaths = []
+    if num_output_files[0] == 0:
+        nslices = [sizeZ]
+        num_output_files = 1
+        fpaths.append("{0}fused_C{1}.ome.tif".format(output_path,str(theC-1)))
+    else:
+        nslices = []
+        for n in range(num_output_files[0]):
+            nslices.append(slices_per_subset)
+
+        if num_output_files[1] > 0:
+            nslices.append(num_output_files[1])        
+        
+        for s in range(len(nslices)):
+            fpaths.append("{0}fused_C{1}_subset{2}.ome.tif"format.(output_path,str(theC-1),str(s)))
+
+    # setup a writer
+    writer = ImageWriter()
+    writer.setCompression('LZW')
+    writer.setMetadataRetrieve(meta)
+    writer.setId(fpaths[0])
+
+    # write the slices, changing the output file when necessary
+    theZ = 0
+    for f in range(len(fpaths)):
+        writer.changeOutputFile(fpaths[f])
+        for s in range(nslices[f]):
+            fpath = output_path+"img_t1_z{0}{1}_c1".format(digits,str(theZ+1))
+            if (len(digits) == 1) and (theZ+1 > 9):
+                fpath = output_path+"img_t1_z{0}_c1".format(str(theZ+1))
+            if (len(digits) == 2) and (theZ+1 > 9):
+                fpath = output_path+"img_t1_z0{0}_c1"format.(str(theZ+1))
+            if (len(digits) == 2) and (theZ+1 > 99):
+                fpath = output_path+"img_t1_z{0}_c1"format.(str(theZ+1))
+            IJ.log("writing slice {0}"format.(os.path.basename(fpath)))
+            m = MetadataTools.createOMEXMLMetadata()
+            r = get_reader(fpath,m)
+            writer.saveBytes(theZ,r.openBytes(0))
+            r.close()
+            theZ += 1
+    writer.close()
+    
+def run_stitching(*args):
+    
+    IJ.run("Grid/Collection stitching", "type=[Grid: snake by rows] order=[Right & Down                ] "\
+            "grid_size_x={0} grid_size_y={1} tile_overlap={2} first_file_index_i=0 "\
+            "directory=[{3}] file_names=[{4}] "\
+            "output_textfile_name=[{5}] fusion_method=[{6}] "\
+            "regression_threshold={7} max/avg_displacement_threshold={8} "\
+            "absolute_displacement_threshold={9} compute_overlap "\
+            "computation_parameters=[Save memory (but be slower)] "\
+            "image_output=[Write to disk] output_directory=[{10}]".format(args)
+            
+def channel_info(meta):
+    sizeC = meta.getPixelsSizeC(0).getValue()
+    channels = []
+    for c in range(sizeC):
+        chan_d = {}
+        chan_d['spp'] = meta.getChannelSamplesPerPixel(0,c)
+        chan_d['name'] = meta.getChannelName(0,c)
+        chan_d['color'] = meta.getChannelColor(0,c)
+        channels.append(chan_d)
+    return channels
+    
+def get_reader(file, complete_meta):
+    reader = ImageReader()
+    reader.setMetadataStore(complete_meta)
+    reader.setId(file)
+    return reader
+    
+def run_script():
+    
+    gridX = %s
+    gridY = %s
+    tile_overlap = %s
+    input_dir = %s
+    results = %s
+    fusion = %s
+    reg_thresh = %s
+    max_disp = %s
+    abs_dip = %s
+    output_dir = %s
+    sizeZ = %s
+    
+    input_data = glob.glob("{0}*.ome.tif".format(input_dir))
+    original_metadata = MetadataTools.createOMEXMLMetadata()
+    reader = get_reader(input_data[0],original_metadata)
+    reader.close()
+
+    channels = channel_info(original_metadata)
+
+    for z in range(sizeZ):
+        tile_names = "{0}Z{1}_T{i}.ome.tif".format(input_dir,z)
+        run_stitching(gridX,gridY,tile_overlap,input_dir,tile_names,\
+                      results,fusion,reg_thresh,max_disp,abs_dip,\
+                      output_dir)
+    
+    write_fused(input_dir,channels,sizeZ) # channel index starts at 1
+
+    delete_slices(input_dir)
+    
+if __name__=='__main__':
+    run_script()
+
+""" % stitching_args
+
+    script_path = "stitching.py"
 
     # write the macro to a known location that we can pass to ImageJ
-    f = open(ijm_path, 'w')
-    f.write(stitching_ijm)
+    f = open(script_path, 'w')
+    f.write(stitching_script)
     f.close()
 
     # Call ImageJ via command line, with macro ijm path & parameters
-    cmd = "%s/ImageJ-linux64 --memory=8000m --headless -macro %s -batch" % (IMAGEJPATH, ijm_path)
+    cmd = "%s/ImageJ-linux64 --memory=8000m --headless %s" % (IMAGEJPATH, ijm_path)
     os.system(cmd)     
 
-def run_stitching(conn,session,omero_image,channels,zslices,stitching_args,results_file):
+def run_stitching(conn,session,stitching_args):
     """
     Launches the Grid Stitching plugin and uplaods results
     
     @param conn:            the BlitzGateWay connection
-    @param omero_image:     the image being analysed
+    @param session:         dictionary containing the session ID and hostname
     @param stitching_args:  list of arguments for stitching provided by the script gui
     """ 
        
@@ -231,22 +382,28 @@ def run_stitching(conn,session,omero_image,channels,zslices,stitching_args,resul
     stitched = glob.glob('%s/*.tif' % output_dir)
     newImg = None
     if stitched:
-        # upload the reconstructed image and attach the result to the image
-        #newImg = upload_reconstructed(conn,omero_image,channels,zslices,stitched)
         newImg = do_import(conn,session,stitched[0])
-#         set_attributes(conn,omero_image,newImg)
-
+        
     return newImg
     
 def download_tiles(conn,image,theC,theZ):
-    
+    # export each plane in the original image, or those
+    # selected by the user, as OME-TIFF
+     
+    if theZ:
+        slicesZ = [theZ]
+    else:
+        slicesZ = range(image.getSizeZ())
+        
     num_tiles = image.getSizeT()
     image_names = []
-    for t in range(num_tiles):
-        im_name = '%s_tile_%s.tif' % (image.getId(), t)
-        exporter = OMEExporter(conn,image,input_dir,im_name,theZ=theZ,theC=theC,theT=t)
-        exporter.generate()
-        image_names.append(im_name)
+    
+    for z in slicesZ:
+        for t in range(num_tiles):
+            im_name = 'Z%s_T%s.ome.tif' % (z, t)
+            exporter = OMEExporter(conn,image,input_dir,im_name,theZ=z,theC=c,theT=t)
+            exporter.generate()
+            image_names.append(im_name)
 
     return image_names
 
@@ -360,22 +517,23 @@ def run_processing(conn, session, script_params):
         theC = None    
         if script_params['Single_Channel']:
             theC = script_params['Channel']
-        print 'theC',theC
+
         theZ = None
+        sizeZ = image.getSizeZ()
         if script_params['Single_Z']:
             theZ = script_params['Z_slice']
-                    
+            sizeZ = 1
+                     
         # download the image
         image_names = download_tiles(conn,image,theC,theZ)
                 
         results_file = str(image.getId()) + "_stitching.txt"        
         
         stitching_args = (script_params['grid_x'], script_params['grid_y'], \
-                          script_params['tile_overlap'], input_dir, \
-                          str(image.getId()), results_file,\
+                          script_params['tile_overlap'], input_dir, results_file,\
                           script_params['fusion_method'], script_params['regression_threshold'], \
                           script_params['ave_displacement_threshold'], script_params['abs_displacement_threshold'],\
-                          output_dir, output_dir)
+                          output_dir,sizeZ)
         
 #         new_image = run_stitching(conn,image,channels,zslices,stitching_args,results_file)
         new_image = run_stitching(conn,session,image,theC,theZ,stitching_args,results_file)
