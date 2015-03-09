@@ -210,6 +210,19 @@ from loci.formats.tiff import TiffSaver
 
 from ome.xml.model.primitives import PositiveInteger
 
+def collect_inputs():
+    gridX = %s
+    gridY = %s
+    tile_overlap = %s
+    input_dir = "%s"
+    results = "%s"
+    fusion = "%s"
+    reg_thresh = %s
+    max_disp = %s
+    abs_dip = %s
+    output_dir = "%s"
+    sizeZ = %s
+    return (gridX,gridY,tile_overlap,input_dir,results,fusion,reg_thresh,max_disp,abs_dip,output_dir,sizeZ)
     
 def delete_slices(slices_dir):
     try:
@@ -303,18 +316,7 @@ def get_reader(file, complete_meta):
     
 def run_script():
     
-    gridX = {0}
-    gridY = {1}
-    tile_overlap = {2}
-    input_dir = "{3}"
-    results = "{4}"
-    fusion = "{5}"
-    reg_thresh = {6}
-    max_disp = {7}
-    abs_dip = {8}
-    output_dir = "{9}"
-    sizeZ = {10}
-    
+    params = collect_inputs()
     input_data = glob.glob("%s/*.ome.tif"%input_dir)
     original_metadata = MetadataTools.createOMEXMLMetadata()
     reader = get_reader(input_data[0],original_metadata)
@@ -324,7 +326,7 @@ def run_script():
 
     for z in range(sizeZ):
         tile_names = "%s/Z%s_T{i}.ome.tif"%(input_dir,z)
-        run_stitching(gridX,gridY,tile_overlap,input_dir,tile_names,results,fusion,reg_thresh,max_disp,abs_dip,output_dir)
+        run_stitching(params)
         filename = output_path+"/img_t1_z1_c1"
         newfilename = output_path+"img_t1_z%s_c1"%str(z+1)
         os.rename(filename,newfilename)
@@ -336,7 +338,7 @@ def run_script():
 if __name__=='__main__':
     run_script()
 
-""".format(stitching_args)
+"""%stitching_args
 
     script_path = input_dir+"/stitching.py"
 
