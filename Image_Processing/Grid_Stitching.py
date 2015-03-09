@@ -292,7 +292,7 @@ def run_stitching(*args):
             "regression_threshold={7} max/avg_displacement_threshold={8} "\
             "absolute_displacement_threshold={9} compute_overlap "\
             "computation_parameters=[Save memory (but be slower)] "\
-            "image_output=[Write to disk] output_directory=[{10}]".format(args)
+            "image_output=[Write to disk] output_directory=[{10}]".format(args))
             
 def channel_info(meta):
     sizeC = meta.getPixelsSizeC(0).getValue()
