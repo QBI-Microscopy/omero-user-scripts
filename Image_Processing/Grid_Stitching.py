@@ -271,7 +271,7 @@ def write_fused(output_path,channel,sizeZ):
             theZ += 1
     writer.close()
     
-def run_stitching(*args):
+def run_stitching(args):
     
     IJ.run("Grid/Collection stitching", "type=[Grid: snake by rows] order=[Right & Down                ] "\
             "grid_size_x=%s grid_size_y=%s tile_overlap=%s first_file_index_i=0 "\
@@ -319,10 +319,10 @@ def run_script():
     reader.close()
 
     channels = channel_info(original_metadata)
-
+    args = (gridX,gridY,tile_overlap,input_dir,results,fusion,reg_thresh,max_disp,abs_dip,output_dir,sizeZ)
     for z in range(sizeZ):
         tile_names = "%s/Z%s_{11}.ome.tif"%(input_dir,z)
-        run_stitching(gridX,gridY,tile_overlap,input_dir,results,fusion,reg_thresh,max_disp,abs_dip,output_dir,sizeZ)
+        run_stitching(args)
         #filename = output_dir+"/img_t1_z1_c1"
         #newfilename = output_dir+"img_t1_z%s_c1"%str(z+1)
         #os.rename(filename,newfilename)
