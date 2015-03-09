@@ -189,8 +189,7 @@ def run_imagej_macro(stitching_args):
     @param image_name:      filename of image being processed
     @param stitching_args:  a list of arguments for stitching provided by the script gui
     """
-    print 'stitching args',stitching_args
-    
+ 
     stitching_script = """
 import sys
 import os
@@ -287,7 +286,7 @@ def channel_info(meta):
     sizeC = meta.getPixelsSizeC(0).getValue()
     channels = []
     for c in range(sizeC):
-        chan_d = {}
+        chan_d = dict()
         chan_d['spp'] = meta.getChannelSamplesPerPixel(0,c)
         chan_d['name'] = meta.getChannelName(0,c)
         chan_d['color'] = meta.getChannelColor(0,c)
@@ -322,7 +321,7 @@ def run_script():
     channels = channel_info(original_metadata)
 
     for z in range(sizeZ):
-        tile_names = "%s/Z%s_T{i}.ome.tif"%(input_dir,z)
+        tile_names = "%s/Z%s_{11}.ome.tif"%(input_dir,z)
         run_stitching(gridX,gridY,tile_overlap,input_dir,results,fusion,reg_thresh,max_disp,abs_dip,output_dir,sizeZ)
         filename = output_path+"/img_t1_z1_c1"
         newfilename = output_path+"img_t1_z%s_c1"%str(z+1)
@@ -333,9 +332,8 @@ def run_script():
     delete_slices(input_dir)
     
 if __name__=='__main__':
-    run_script()
+    run_script()""".format(*stitching_args)
 
-""".format(*stitching_args)
 
     script_path = input_dir+"/stitching.py"
 
@@ -519,7 +517,7 @@ def run_processing(conn, session, script_params):
                           script_params['tile_overlap'], input_dir, results_file,\
                           script_params['fusion_method'], script_params['regression_threshold'], \
                           script_params['ave_displacement_threshold'], script_params['abs_displacement_threshold'],\
-                          output_dir,sizeZ)
+                          output_dir,sizeZ,"T{i}")
         
 #         new_image = run_stitching(conn,image,channels,zslices,stitching_args,results_file)
         new_image = run_stitching(conn,session,stitching_args)
