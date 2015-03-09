@@ -275,7 +275,7 @@ def write_fused(output_path,channel,sizeZ):
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
             fpath = output_path+"img_t1_z{0}_c1".format(str(theZ+1))
-            IJ.log("writing slice {0}"format.(os.path.basename(fpath)))
+            IJ.log("writing slice {0}".format(os.path.basename(fpath)))
             m = MetadataTools.createOMEXMLMetadata()
             r = get_reader(fpath,m)
             writer.saveBytes(theZ,r.openBytes(0))
