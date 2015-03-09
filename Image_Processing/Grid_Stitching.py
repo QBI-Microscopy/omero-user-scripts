@@ -338,9 +338,7 @@ def run_script():
 
     for z in range(sizeZ):
         tile_names = "{0}/Z{1}_T{i}.ome.tif".format(input_dir,z)
-        run_stitching(z+1,gridX,gridY,tile_overlap,input_dir,tile_names,\
-                      results,fusion,reg_thresh,max_disp,abs_dip,\
-                      output_dir)
+        run_stitching(z+1,gridX,gridY,tile_overlap,input_dir,tile_names,results,fusion,reg_thresh,max_disp,abs_dip,output_dir)
     
     write_fused(input_dir,channels,sizeZ) # channel index starts at 1
 
