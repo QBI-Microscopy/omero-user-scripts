@@ -20,8 +20,6 @@ import tempfile
 import shutil
 from numpy import zeros
 import glob
-from tifffile import TiffFile, imsave
-from libtiff import TIFF, TIFFfile
 from ome_metadata import OMEExporter
 
 from email.MIMEMultipart import MIMEMultipart
@@ -233,7 +231,7 @@ def write_fused(output_path,channel,sizeZ):
 
     # get the base metadata from the first fused image
     meta = MetadataTools.createOMEXMLMetadata()
-    reader = get_reader(output_path+"img_t1_z{0}1_c1".format(digits),meta)
+    reader = get_reader(output_path+"img_t1_z1_c1",meta)
     reader.close()
     
     # reset some metadata
@@ -276,13 +274,7 @@ def write_fused(output_path,channel,sizeZ):
     for f in range(len(fpaths)):
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
-            fpath = output_path+"img_t1_z{0}{1}_c1".format(digits,str(theZ+1))
-            if (len(digits) == 1) and (theZ+1 > 9):
-                fpath = output_path+"img_t1_z{0}_c1".format(str(theZ+1))
-            if (len(digits) == 2) and (theZ+1 > 9):
-                fpath = output_path+"img_t1_z0{0}_c1"format.(str(theZ+1))
-            if (len(digits) == 2) and (theZ+1 > 99):
-                fpath = output_path+"img_t1_z{0}_c1"format.(str(theZ+1))
+            fpath = output_path+"img_t1_z{0}_c1".format(str(theZ+1))
             IJ.log("writing slice {0}"format.(os.path.basename(fpath)))
             m = MetadataTools.createOMEXMLMetadata()
             r = get_reader(fpath,m)
@@ -328,13 +320,13 @@ def run_script():
     gridX = %s
     gridY = %s
     tile_overlap = %s
-    input_dir = %s
-    results = %s
-    fusion = %s
+    input_dir = "%s"
+    results = "%s"
+    fusion = "%s"
     reg_thresh = %s
     max_disp = %s
     abs_dip = %s
-    output_dir = %s
+    output_dir = "%s"
     sizeZ = %s
     
     input_data = glob.glob("{0}*.ome.tif".format(input_dir))
@@ -359,7 +351,7 @@ if __name__=='__main__':
 
 """ % stitching_args
 
-    script_path = "stitching.py"
+    script_path = input_dir+"/stitching.py"
 
     # write the macro to a known location that we can pass to ImageJ
     f = open(script_path, 'w')
@@ -367,7 +359,7 @@ if __name__=='__main__':
     f.close()
 
     # Call ImageJ via command line, with macro ijm path & parameters
-    cmd = "%s/ImageJ-linux64 --memory=8000m --headless %s" % (IMAGEJPATH, ijm_path)
+    cmd = "%s/ImageJ-linux64 --memory=8000m --headless %s" % (IMAGEJPATH, script_path)
     os.system(cmd)     
 
 def run_stitching(conn,session,stitching_args):
@@ -378,7 +370,8 @@ def run_stitching(conn,session,stitching_args):
     @param session:         dictionary containing the session ID and hostname
     @param stitching_args:  list of arguments for stitching provided by the script gui
     """ 
-       
+    
+    conn.keepAlive()   
     images = glob.glob(input_dir + '/*.tif')
     print 'images',images
     
@@ -405,7 +398,7 @@ def download_tiles(conn,image,theC,theZ):
     for z in slicesZ:
         for t in range(num_tiles):
             im_name = 'Z%s_T%s.ome.tif' % (z, t)
-            exporter = OMEExporter(conn,image,input_dir,im_name,theZ=z,theC=c,theT=t)
+            exporter = OMEExporter(conn,image,input_dir,im_name,theZ=z,theC=theC,theT=t)
             exporter.generate()
             image_names.append(im_name)
 
@@ -540,7 +533,7 @@ def run_processing(conn, session, script_params):
                           output_dir,sizeZ)
         
 #         new_image = run_stitching(conn,image,channels,zslices,stitching_args,results_file)
-        new_image = run_stitching(conn,session,image,theC,theZ,stitching_args,results_file)
+        new_image = run_stitching(conn,session,stitching_args)
 
         create_containers(conn,image, new_image)
                     
@@ -659,7 +652,7 @@ MAXIMUM NUMBER OF DATASETS FOR BATCH IS FIVE!""",
     )
 
     try:
-
+        client.enableKeepAlive(3600)
         # process the list of args above.
         scriptParams = {}
         for key in client.getInputKeys():
