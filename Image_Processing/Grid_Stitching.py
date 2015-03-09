@@ -337,7 +337,7 @@ def run_script():
     channels = channel_info(original_metadata)
 
     for z in range(sizeZ):
-        tile_names = "{0}Z{1}_T{i}.ome.tif".format(input_dir,z)
+        tile_names = "{0}/Z{1}_T{i}.ome.tif".format(input_dir,z)
         run_stitching(z+1,gridX,gridY,tile_overlap,input_dir,tile_names,\
                       results,fusion,reg_thresh,max_disp,abs_dip,\
                       output_dir)
@@ -388,17 +388,20 @@ def download_tiles(conn,image,theC,theZ):
     # selected by the user, as OME-TIFF
      
     if theZ:
+        sizeZ = 1
         slicesZ = [theZ]
     else:
-        slicesZ = range(image.getSizeZ())
+        sizeZ = image.getSizeZ()
+        slicesZ = range(sizeZ)
         
     num_tiles = image.getSizeT()
     image_names = []
     
-    for z in slicesZ:
+    for z in range(sizeZ):
+        theZ = slicesZ[z]
         for t in range(num_tiles):
             im_name = 'Z%s_T%s.ome.tif' % (z, t)
-            exporter = OMEExporter(conn,image,input_dir,im_name,theZ=z,theC=theC,theT=t)
+            exporter = OMEExporter(conn,image,input_dir,im_name,theZ=theZ,theC=theC,theT=t)
             exporter.generate()
             image_names.append(im_name)
 
