@@ -283,7 +283,7 @@ def write_fused(output_path,channel,sizeZ):
             theZ += 1
     writer.close()
     
-def run_stitching(theZ,*args):
+def run_stitching(*args):
     
     IJ.run("Grid/Collection stitching", "type=[Grid: snake by rows] order=[Right & Down                ] "\
             "grid_size_x={0} grid_size_y={1} tile_overlap={2} first_file_index_i=0 "\
@@ -293,10 +293,6 @@ def run_stitching(theZ,*args):
             "absolute_displacement_threshold={9} compute_overlap "\
             "computation_parameters=[Save memory (but be slower)] "\
             "image_output=[Write to disk] output_directory=[{10}]".format(args)
-            
-    filename = output_path+"img_t1_z1_c1"
-    newfilename = output_path+"img_t1_z{0}_c1".format(theZ)
-    os.rename(filename,newfilename)
             
 def channel_info(meta):
     sizeC = meta.getPixelsSizeC(0).getValue()
@@ -338,8 +334,11 @@ def run_script():
 
     for z in range(sizeZ):
         tile_names = "{0}/Z{1}_T{i}.ome.tif".format(input_dir,z)
-        run_stitching(z+1,gridX,gridY,tile_overlap,input_dir,tile_names,results,fusion,reg_thresh,max_disp,abs_dip,output_dir)
-    
+        run_stitching(gridX,gridY,tile_overlap,input_dir,tile_names,results,fusion,reg_thresh,max_disp,abs_dip,output_dir)
+        filename = output_path+"/img_t1_z1_c1"
+        newfilename = output_path+"img_t1_z{0}_c1".format(str(z+1))
+        os.rename(filename,newfilename)
+        
     write_fused(input_dir,channels,sizeZ) # channel index starts at 1
 
     delete_slices(input_dir)
