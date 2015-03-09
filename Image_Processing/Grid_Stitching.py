@@ -213,25 +213,16 @@ from ome.xml.model.primitives import PositiveInteger
     
 def delete_slices(slices_dir):
     try:
-        for name in glob.glob("{0}img*".format(slices_dir)):
+        for name in glob.glob("%s/img*"%slices_dir):
             os.remove(name)
     except:
         pass 
     
 def write_fused(output_path,channel,sizeZ):
 
-    IJ.log("Writing fused data")
-
-    # number of slices will determine filename format
-    digits = "00"
-    if sizeZ < 100:
-        digits = "0"
-    if sizeZ < 10:
-        digits = ""
-
     # get the base metadata from the first fused image
     meta = MetadataTools.createOMEXMLMetadata()
-    reader = get_reader(output_path+"img_t1_z1_c1",meta)
+    reader = get_reader(output_path+"/img_t1_z1_c1",meta)
     reader.close()
     
     # reset some metadata
@@ -251,7 +242,7 @@ def write_fused(output_path,channel,sizeZ):
     if num_output_files[0] == 0:
         nslices = [sizeZ]
         num_output_files = 1
-        fpaths.append("{0}fused_C{1}.ome.tif".format(output_path,str(theC-1)))
+        fpaths.append("%s/fused_C%s.ome.tif"%(output_path,str(theC-1)))
     else:
         nslices = []
         for n in range(num_output_files[0]):
@@ -261,7 +252,7 @@ def write_fused(output_path,channel,sizeZ):
             nslices.append(num_output_files[1])        
         
         for s in range(len(nslices)):
-            fpaths.append("{0}fused_C{1}_subset{2}.ome.tif".format(output_path,str(theC-1),str(s)))
+            fpaths.append("%s/fused_C%s_subset%s.ome.tif"%(output_path,str(theC-1),str(s)))
 
     # setup a writer
     writer = ImageWriter()
@@ -274,8 +265,7 @@ def write_fused(output_path,channel,sizeZ):
     for f in range(len(fpaths)):
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
-            fpath = output_path+"img_t1_z{0}_c1".format(str(theZ+1))
-            IJ.log("writing slice {0}".format(os.path.basename(fpath)))
+            fpath = output_path+"img_t1_z%s_c1"%str(theZ+1)
             m = MetadataTools.createOMEXMLMetadata()
             r = get_reader(fpath,m)
             writer.saveBytes(theZ,r.openBytes(0))
@@ -286,13 +276,13 @@ def write_fused(output_path,channel,sizeZ):
 def run_stitching(*args):
     
     IJ.run("Grid/Collection stitching", "type=[Grid: snake by rows] order=[Right & Down                ] "\
-            "grid_size_x={0} grid_size_y={1} tile_overlap={2} first_file_index_i=0 "\
-            "directory=[{3}] file_names=[{4}] "\
-            "output_textfile_name=[{5}] fusion_method=[{6}] "\
-            "regression_threshold={7} max/avg_displacement_threshold={8} "\
-            "absolute_displacement_threshold={9} compute_overlap "\
+            "grid_size_x=%s grid_size_y=%s tile_overlap=%s first_file_index_i=0 "\
+            "directory=[%s] file_names=[%s] "\
+            "output_textfile_name=[%s] fusion_method=[%s] "\
+            "regression_threshold=%s max/avg_displacement_threshold=%s "\
+            "absolute_displacement_threshold=%s compute_overlap "\
             "computation_parameters=[Save memory (but be slower)] "\
-            "image_output=[Write to disk] output_directory=[{10}]".format(args))
+            "image_output=[Write to disk] output_directory=[%s]"%args)
             
 def channel_info(meta):
     sizeC = meta.getPixelsSizeC(0).getValue()
@@ -313,19 +303,19 @@ def get_reader(file, complete_meta):
     
 def run_script():
     
-    gridX = %s
-    gridY = %s
-    tile_overlap = %s
-    input_dir = "%s"
-    results = "%s"
-    fusion = "%s"
-    reg_thresh = %s
-    max_disp = %s
-    abs_dip = %s
-    output_dir = "%s"
-    sizeZ = %s
+    gridX = {0}
+    gridY = {1}
+    tile_overlap = {2}
+    input_dir = "{3}"
+    results = "{4}"
+    fusion = "{5}"
+    reg_thresh = {6}
+    max_disp = {7}
+    abs_dip = {8}
+    output_dir = "{9}"
+    sizeZ = {10}
     
-    input_data = glob.glob("{0}*.ome.tif".format(input_dir))
+    input_data = glob.glob("%s/*.ome.tif"%input_dir)
     original_metadata = MetadataTools.createOMEXMLMetadata()
     reader = get_reader(input_data[0],original_metadata)
     reader.close()
@@ -333,10 +323,10 @@ def run_script():
     channels = channel_info(original_metadata)
 
     for z in range(sizeZ):
-        tile_names = "{0}/Z{1}_T{i}.ome.tif".format(input_dir,z)
+        tile_names = "%s/Z%s_T{i}.ome.tif"%(input_dir,z)
         run_stitching(gridX,gridY,tile_overlap,input_dir,tile_names,results,fusion,reg_thresh,max_disp,abs_dip,output_dir)
         filename = output_path+"/img_t1_z1_c1"
-        newfilename = output_path+"img_t1_z{0}_c1".format(str(z+1))
+        newfilename = output_path+"img_t1_z%s_c1"%str(z+1)
         os.rename(filename,newfilename)
         
     write_fused(input_dir,channels,sizeZ) # channel index starts at 1
@@ -346,7 +336,7 @@ def run_script():
 if __name__=='__main__':
     run_script()
 
-""" % stitching_args
+""".format(stitching_args)
 
     script_path = input_dir+"/stitching.py"
 
