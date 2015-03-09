@@ -327,7 +327,7 @@ def run_script():
         #newfilename = output_dir+"img_t1_z%s_c1"%str(z+1)
         #os.rename(filename,newfilename)
         
-    write_fused(input_dir,channels,sizeZ) # channel index starts at 1
+    write_fused(output_dir,channels,sizeZ) # channel index starts at 1
 
     delete_slices(input_dir)
     
