@@ -326,7 +326,7 @@ def run_script():
 
     for z in range(sizeZ):
         tile_names = "%s/Z%s_T{i}.ome.tif"%(input_dir,z)
-        run_stitching(params)
+        run_stitching(*params)
         filename = output_path+"/img_t1_z1_c1"
         newfilename = output_path+"img_t1_z%s_c1"%str(z+1)
         os.rename(filename,newfilename)
