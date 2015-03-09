@@ -323,9 +323,9 @@ def run_script():
     for z in range(sizeZ):
         tile_names = "%s/Z%s_{11}.ome.tif"%(input_dir,z)
         run_stitching(gridX,gridY,tile_overlap,input_dir,results,fusion,reg_thresh,max_disp,abs_dip,output_dir,sizeZ)
-        filename = output_dir+"/img_t1_z1_c1"
-        newfilename = output_dir+"img_t1_z%s_c1"%str(z+1)
-        os.rename(filename,newfilename)
+        #filename = output_dir+"/img_t1_z1_c1"
+        #newfilename = output_dir+"img_t1_z%s_c1"%str(z+1)
+        #os.rename(filename,newfilename)
         
     write_fused(input_dir,channels,sizeZ) # channel index starts at 1
 
