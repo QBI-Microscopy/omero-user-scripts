@@ -321,7 +321,7 @@ def run_script():
 
     channels = channel_info(original_metadata)
     for z in range(sizeZ):
-        tile_names = "%s/Z%s_{11}.ome.tif"%(input_dir,z)
+        tile_names = "Z%s_{11}.ome.tif"%z
         args = (gridX,gridY,tile_overlap,input_dir,tile_names, \\
                 results,fusion,reg_thresh,max_disp,\\
                 abs_dip,output_dir)
