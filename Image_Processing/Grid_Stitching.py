@@ -240,7 +240,8 @@ def write_fused(output_path,channel,sizeZ):
     if num_output_files[0] == 0:
         nslices = [sizeZ]
         num_output_files = 1
-        fpaths.append("%s/fused_C%s.ome.tif"%(output_path,str(theC-1)))
+        #fpaths.append("%s/fused_C%s.ome.tif"%(output_path,str(theC-1)))
+        fpaths.append("%s/fused.ome.tif"%output_path)
     else:
         nslices = []
         for n in range(num_output_files[0]):
@@ -263,7 +264,7 @@ def write_fused(output_path,channel,sizeZ):
     for f in range(len(fpaths)):
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
-            fpath = output_path+"img_t1_z%s_c1"%str(theZ+1)
+            fpath = output_path+"/img_t1_z%s_c1"%str(theZ+1)
             m = MetadataTools.createOMEXMLMetadata()
             r = get_reader(fpath,m)
             writer.saveBytes(theZ,r.openBytes(0))
@@ -319,15 +320,14 @@ def run_script():
     reader.close()
 
     channels = channel_info(original_metadata)
-    args = (gridX,gridY,tile_overlap,input_dir,results,fusion,reg_thresh,max_disp,abs_dip,output_dir,sizeZ)
     for z in range(sizeZ):
         tile_names = "%s/Z%s_{11}.ome.tif"%(input_dir,z)
+        args = (gridX,gridY,tile_overlap,input_dir,tile_names, \\
+                results,fusion,reg_thresh,max_disp,\\
+                abs_dip,output_dir)
         run_stitching(args)
-        #filename = output_dir+"/img_t1_z1_c1"
-        #newfilename = output_dir+"img_t1_z%s_c1"%str(z+1)
-        #os.rename(filename,newfilename)
         
-    write_fused(output_dir,channels,sizeZ) # channel index starts at 1
+    write_fused(output_dir,channels[0],sizeZ)
 
     delete_slices(input_dir)
     
