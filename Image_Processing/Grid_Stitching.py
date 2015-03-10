@@ -337,6 +337,9 @@ def run_script():
                 results,fusion,reg_thresh,max_disp,\\
                 abs_dip,output_dir)
         run_stitching(args)
+        filename = output_path+"/img_t1_z1_c1"
+        newfilename = output_path+"/img_t1_z%s_c1"%str(z+1)
+        os.rename(filename,newfilename)
         
     write_fused(output_dir,channels[0],physX,physY,physZ,sizeZ)
 
