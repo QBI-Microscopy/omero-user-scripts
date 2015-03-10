@@ -273,13 +273,13 @@ def write_fused(output_path,channel,sizeZ):
     
 def run_stitching(args):
     
-    IJ.run("Grid/Collection stitching", "type=[Grid: snake by rows] order=[Right & Down                ] "\
-            "grid_size_x=%s grid_size_y=%s tile_overlap=%s first_file_index_i=0 "\
-            "directory=[%s] file_names=[%s] "\
-            "output_textfile_name=[%s] fusion_method=[%s] "\
-            "regression_threshold=%s max/avg_displacement_threshold=%s "\
-            "absolute_displacement_threshold=%s compute_overlap "\
-            "computation_parameters=[Save memory (but be slower)] "\
+    IJ.run("Grid/Collection stitching", "type=[Grid: snake by rows] order=[Right & Down                ] "\\
+            "grid_size_x=%s grid_size_y=%s tile_overlap=%s first_file_index_i=0 "\\
+            "directory=[%s] file_names=[%s] "\\
+            "output_textfile_name=[%s] fusion_method=[%s] "\\
+            "regression_threshold=%s max/avg_displacement_threshold=%s "\\
+            "absolute_displacement_threshold=%s compute_overlap "\\
+            "computation_parameters=[Save memory (but be slower)] "\\
             "image_output=[Write to disk] output_directory=[%s]"%args)
             
 def channel_info(meta):
