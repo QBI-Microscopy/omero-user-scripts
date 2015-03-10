@@ -216,7 +216,7 @@ def delete_slices(slices_dir):
     except:
         pass 
     
-def write_fused(output_path,channel,sizeZ):
+def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
 
     # get the base metadata from the first fused image
     meta = MetadataTools.createOMEXMLMetadata()
@@ -224,6 +224,9 @@ def write_fused(output_path,channel,sizeZ):
     reader.close()
     
     # reset some metadata
+    meta.setPixelsPhysicalSizeX(physX,0)
+    meta.setPixelsPhysicalSizeY(physY,0)
+    meta.setPixelsPhysicalSizeZ(physZ,0)
     meta.setPixelsSizeZ(PositiveInteger(sizeZ),0)
     meta.setChannelID("Channel:0:" + str(0), 0, 0)
     spp = channel['spp']
@@ -262,6 +265,7 @@ def write_fused(output_path,channel,sizeZ):
     # write the slices, changing the output file when necessary
     theZ = 0
     for f in range(len(fpaths)):
+        meta.setImageName(os.path.basename(fpaths[f]),0)
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
             fpath = output_path+"/img_t1_z%s_c1"%str(theZ+1)
@@ -282,6 +286,12 @@ def run_stitching(args):
             "absolute_displacement_threshold=%s compute_overlap "\\
             "computation_parameters=[Save memory (but be slower)] "\\
             "image_output=[Write to disk] output_directory=[%s]"%args)
+            
+def pixel_info(meta):
+    physX = meta.getPixelsPhysicalSizeZ(0)
+    physY = meta.getPixelsPhysicalSizeZ(0)
+    physZ = meta.getPixelsPhysicalSizeZ(0)
+    return physX,physY,physZ
             
 def channel_info(meta):
     sizeC = meta.getPixelsSizeC(0).getValue()
@@ -327,7 +337,7 @@ def run_script():
                 abs_dip,output_dir)
         run_stitching(args)
         
-    write_fused(output_dir,channels[0],sizeZ)
+    write_fused(output_dir,channels[0],physX,physY,physZ,sizeZ)
 
     delete_slices(input_dir)
     
