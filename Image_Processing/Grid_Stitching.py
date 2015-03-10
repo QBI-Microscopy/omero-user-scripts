@@ -288,8 +288,8 @@ def run_stitching(args):
             "image_output=[Write to disk] output_directory=[%s]"%args)
             
 def pixel_info(meta):
-    physX = meta.getPixelsPhysicalSizeZ(0)
-    physY = meta.getPixelsPhysicalSizeZ(0)
+    physX = meta.getPixelsPhysicalSizeX(0)
+    physY = meta.getPixelsPhysicalSizeY(0)
     physZ = meta.getPixelsPhysicalSizeZ(0)
     return physX,physY,physZ
             
