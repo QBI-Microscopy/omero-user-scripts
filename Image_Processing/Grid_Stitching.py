@@ -220,7 +220,7 @@ def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
 
     # get the base metadata from the first fused image
     meta = MetadataTools.createOMEXMLMetadata()
-    reader = get_reader(output_path+"/img_t1_z1_c1",meta)
+    reader = get_reader(output_path+"/newimg_t1_z0_c1",meta)
     reader.close()
     
     # reset some metadata
@@ -268,7 +268,7 @@ def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
         meta.setImageName(os.path.basename(fpaths[f]),0)
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
-            fpath = output_path+"/img_t1_z%s_c1"%str(theZ+1)
+            fpath = output_path+"/newimg_t1_z%s_c1"%str(theZ)
             m = MetadataTools.createOMEXMLMetadata()
             r = get_reader(fpath,m)
             writer.saveBytes(theZ,r.openBytes(0))
@@ -338,7 +338,7 @@ def run_script():
                 abs_dip,output_dir)
         run_stitching(args)
         filename = output_dir+"/img_t1_z1_c1"
-        newfilename = output_dir+"/img_t1_z%s_c1"%str(z+1)
+        newfilename = output_dir+"/newimg_t1_z%s_c1"%str(z)
         os.rename(filename,newfilename)
         
     write_fused(output_dir,channels[0],physX,physY,physZ,sizeZ)
