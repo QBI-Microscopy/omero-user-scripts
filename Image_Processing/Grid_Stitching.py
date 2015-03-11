@@ -332,7 +332,7 @@ def run_script():
     channels = channel_info(original_metadata)
     physX,physY,physZ = pixel_info(original_metadata)
 
-    tile_names = "tile_{11}.ome.tif"%z
+    tile_names = "tile_{11}.ome.tif"
     args = (gridX,gridY,tile_overlap,input_dir,tile_names, \\
             results,fusion,reg_thresh,max_disp,\\
             abs_dip,output_dir)
