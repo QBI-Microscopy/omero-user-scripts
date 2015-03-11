@@ -220,7 +220,7 @@ def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
 
     # get the base metadata from the first fused image
     meta = MetadataTools.createOMEXMLMetadata()
-    reader = get_reader(output_path+"/newimg_t1_z0_c1",meta)
+    reader = get_reader(output_path+"/newimg_t1_z1_c1",meta)
     reader.close()
     
     # reset some metadata
@@ -268,7 +268,7 @@ def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
         meta.setImageName(os.path.basename(fpaths[f]),0)
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
-            fpath = output_path+"/newimg_t1_z%s_c1"%str(theZ)
+            fpath = output_path+"/newimg_t1_z%s_c1"%str(theZ+1)
             m = MetadataTools.createOMEXMLMetadata()
             r = get_reader(fpath,m)
             writer.saveBytes(theZ,r.openBytes(0))
@@ -331,15 +331,12 @@ def run_script():
 
     channels = channel_info(original_metadata)
     physX,physY,physZ = pixel_info(original_metadata)
-    for z in range(sizeZ):
-        tile_names = "Z%s_{11}.ome.tif"%z
-        args = (gridX,gridY,tile_overlap,input_dir,tile_names, \\
-                results,fusion,reg_thresh,max_disp,\\
-                abs_dip,output_dir)
-        run_stitching(args)
-        filename = output_dir+"/img_t1_z1_c1"
-        newfilename = output_dir+"/newimg_t1_z%s_c1"%str(z)
-        os.rename(filename,newfilename)
+
+    tile_names = "tile_{11}.ome.tif"%z
+    args = (gridX,gridY,tile_overlap,input_dir,tile_names, \\
+            results,fusion,reg_thresh,max_disp,\\
+            abs_dip,output_dir)
+    run_stitching(args)
         
     write_fused(output_dir,channels[0],physX,physY,physZ,sizeZ)
 
@@ -382,26 +379,16 @@ def run_stitching(conn,session,stitching_args):
     return newImg
     
 def download_tiles(conn,image,theC,theZ):
-    # export each plane in the original image, or those
+    # export every plane in the original image, or those
     # selected by the user, as OME-TIFF
-     
-    if theZ:
-        sizeZ = 1
-        slicesZ = [theZ]
-    else:
-        sizeZ = image.getSizeZ()
-        slicesZ = range(sizeZ)
         
     num_tiles = image.getSizeT()
     image_names = []
-    
-    for z in range(sizeZ):
-        theZ = slicesZ[z]
-        for t in range(num_tiles):
-            im_name = 'Z%s_T%s.ome.tif' % (z, t)
-            exporter = OMEExporter(conn,image,input_dir,im_name,theZ=theZ,theC=theC,theT=t)
-            exporter.generate()
-            image_names.append(im_name)
+    for t in range(num_tiles):
+        im_name = 'tile_T%s.ome.tif' % t
+        exporter = OMEExporter(conn,image,input_dir,im_name,theZ=theZ,theC=theC,theT=t)
+        exporter.generate()
+        image_names.append(im_name)
 
     return image_names
 
