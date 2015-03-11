@@ -275,13 +275,13 @@ def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
         meta.setImageName(os.path.basename(fpaths[f]),0)
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
-            fpath = output_path+"img_t1_z%s%s_c1"%(digits,str(theZ+1))
+            fpath = output_path+"/img_t1_z%s%s_c1"%(digits,str(theZ+1))
             if (len(digits) == 1) and (theZ+1 > 9):
-                fpath = output_path+"img_t1_z%s_c1"%(str(theZ+1))
+                fpath = output_path+"/img_t1_z%s_c1"%(str(theZ+1))
             if (len(digits) == 2) and (theZ+1 > 9):
-                fpath = output_path+"img_t1_z0%s_c1"%(str(theZ+1))
+                fpath = output_path+"/img_t1_z0%s_c1"%(str(theZ+1))
             if (len(digits) == 2) and (theZ+1 > 99):
-                fpath = output_path+"img_t1_z%s_c1"%(str(theZ+1))
+                fpath = output_path+"/img_t1_z%s_c1"%(str(theZ+1))
             m = MetadataTools.createOMEXMLMetadata()
             r = get_reader(fpath,m)
             writer.saveBytes(theZ,r.openBytes(0))
@@ -394,7 +394,7 @@ def run_stitching(conn,session,stitching_args):
 def download_tiles(conn,image,theC,theZ):
     # export every plane in the original image, or those
     # selected by the user, as OME-TIFF
-        
+    print "theZ passed to exporter",theZ    
     num_tiles = image.getSizeT()
     image_names = []
     for t in range(num_tiles):
@@ -524,9 +524,9 @@ def run_processing(conn, session, script_params):
         if script_params['Range_Z']:
             zstart = script_params['Z_start']
             zstop = script_params['Z_stop']
-            theZ = range(zstart,zstop)
+            theZ = range(zstart,zstop+1)
             sizeZ = len(theZ)
-                     
+        
         # download the image
         image_names = download_tiles(conn,image,theC,theZ)
                 
@@ -627,7 +627,7 @@ MAXIMUM NUMBER OF DATASETS FOR BATCH IS FIVE!""",
         description="z-slice to be stitched"),
                             
     scripts.Bool("Range_Z", grouping="05",default=False,
-        description="Stitch all z slices or a single slice? Uncheck for all z slices"),
+        description="Stitch a range of slices? Uncheck for all z slices"),
                                                         
     scripts.Int("Z_start", grouping="05.1",
         description="start at this z-slice"),
