@@ -218,6 +218,13 @@ def delete_slices(slices_dir):
     
 def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
 
+    # number of slices will determine filename format
+    digits = "00"
+    if sizeZ < 100:
+        digits = "0"
+    if sizeZ < 10:
+        digits = ""
+
     # get the base metadata from the first fused image
     meta = MetadataTools.createOMEXMLMetadata()
     reader = get_reader(output_path+"/img_t1_z1_c1",meta)
@@ -268,7 +275,13 @@ def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
         meta.setImageName(os.path.basename(fpaths[f]),0)
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
-            fpath = output_path+"/img_t1_z%s_c1"%str(theZ+1)
+            fpath = output_path+"img_t1_z%s%s_c1"%(digits,str(theZ+1))
+            if (len(digits) == 1) and (theZ+1 > 9):
+                fpath = output_path+"img_t1_z%s_c1"%(str(theZ+1))
+            if (len(digits) == 2) and (theZ+1 > 9):
+                fpath = output_path+"img_t1_z0%s_c1"%(str(theZ+1))
+            if (len(digits) == 2) and (theZ+1 > 99):
+                fpath = output_path+"img_t1_z%s_c1"%(str(theZ+1))
             m = MetadataTools.createOMEXMLMetadata()
             r = get_reader(fpath,m)
             writer.saveBytes(theZ,r.openBytes(0))
@@ -508,6 +521,11 @@ def run_processing(conn, session, script_params):
         if script_params['Single_Z']:
             theZ = script_params['Z_slice']
             sizeZ = 1
+        if script_params['Range_Z']:
+            zstart = script_params['Z_start']
+            zstop = script_params['Z_stop']
+            theZ = range(zstart,zstop)
+            sizeZ = len(range(theZ))
                      
         # download the image
         image_names = download_tiles(conn,image,theC,theZ)
@@ -607,32 +625,41 @@ MAXIMUM NUMBER OF DATASETS FOR BATCH IS FIVE!""",
                                                         
     scripts.Int("Z_slice", grouping="04.1",
         description="z-slice to be stitched"),
+                            
+    scripts.Bool("Range_Z", grouping="05",default=False,
+        description="Stitch all z slices or a single slice? Uncheck for all z slices"),
                                                         
-    scripts.Int("grid_x", optional=False, grouping="05", default=2,
+    scripts.Int("Z_start", grouping="05.1",
+        description="start at this z-slice"),
+                        
+    scripts.Int("Z_stop", grouping="05.2",
+        description="stop at this z slice"),
+                                                        
+    scripts.Int("grid_x", optional=False, grouping="06", default=2,
         description="how many tiles in the x-direction"),
 
-    scripts.Int("grid_y", optional=False, grouping="06", default=2,
+    scripts.Int("grid_y", optional=False, grouping="07", default=2,
         description="how many tiles in the y-direction"),      
                             
-    scripts.Int("tile_overlap", optional=False, grouping="06",default=20,
+    scripts.Int("tile_overlap", optional=False, grouping="08",default=20,
         description="percentage overlap between tiles"),  
                             
-    scripts.String("fusion_method", optional=False, grouping="07",default='Linear Blending',
+    scripts.String("fusion_method", optional=False, grouping="09",default='Linear Blending',
         description="method used to fuse the tiles", values=fusion_method),
                         
-    scripts.Float("regression_threshold", optional=False, grouping="08",default=0.3,
+    scripts.Float("regression_threshold", optional=False, grouping="10",default=0.3,
         description="global optimisation parameter"),  
 
-    scripts.Float("ave_displacement_threshold", optional=False, grouping="09",default=2.5,
+    scripts.Float("ave_displacement_threshold", optional=False, grouping="11",default=2.5,
         description="global optimisation parameter"),
 
-    scripts.Float("abs_displacement_threshold", optional=False, grouping="10",default=3.5,
+    scripts.Float("abs_displacement_threshold", optional=False, grouping="12",default=3.5,
         description="global optimisation parameter"),                                             
                             
-    scripts.Bool("Email_Results", grouping="11", default=False,
+    scripts.Bool("Email_Results", grouping="13", default=False,
         description="E-mail the results"),
                             
-    scripts.String("Email_address", grouping="11.1", description="Specify e-mail address"),                                       
+    scripts.String("Email_address", grouping="13.1", description="Specify e-mail address"),                                       
         
     authors = ["Daniel Matthews", "QBI"],
     institutions = ["University of Queensland"],
