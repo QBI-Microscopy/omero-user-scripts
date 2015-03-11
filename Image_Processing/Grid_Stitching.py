@@ -525,7 +525,7 @@ def run_processing(conn, session, script_params):
             zstart = script_params['Z_start']
             zstop = script_params['Z_stop']
             theZ = range(zstart,zstop)
-            sizeZ = len(range(theZ))
+            sizeZ = len(theZ)
                      
         # download the image
         image_names = download_tiles(conn,image,theC,theZ)
