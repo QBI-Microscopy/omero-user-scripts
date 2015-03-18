@@ -180,7 +180,7 @@ if roiCount > 1:
 omeMetaStr =  omeMeta.dumpXML()
 shape = omeMeta.getShapeType(0,0)
 
-if 'Polygon' not in shape:
+if ('Polygon' not in shape) or ('Polyline' not in shape):
     sys.exit(0)
 
 prefix = omeMetaStr.index(shape)
