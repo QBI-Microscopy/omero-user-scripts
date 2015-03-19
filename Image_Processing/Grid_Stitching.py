@@ -179,12 +179,13 @@ def do_import(conn, session, filename, dataset=None, project=None):
     newImg = get_new_image(conn)
     return newImg
 
-def run_imagej_macro(stitching_args):
+def run_imagej_script(stitching_args):
     """
-    Here we set-up the ImageJ macro and run it from the command line.
-    We need to know the path to ImageJ jar.
-    The macro text is written to the temp folder that we're running the script in,
-    and the path to the macro is passed to the command line.
+    Here we set-up the ImageJ script and run it from the command line
+    using the Docker Image fiji/fiji:latest.
+    The script text is written to the temp folder that we're running the script in.
+    Note that we also create volumes in the Docker image for input images (tiles)
+    and output images (fused).
     
     @param image_name:      filename of image being processed
     @param stitching_args:  a list of arguments for stitching provided by the script gui
@@ -386,7 +387,7 @@ def run_stitching(conn,session,stitching_args):
     images = glob.glob(input_dir + '/*.tif')
     print 'images',images
     
-    run_imagej_macro(stitching_args)
+    run_imagej_script(stitching_args)
     stitched = glob.glob('%s/*.tif' % output_dir)
     newImg = None
     if stitched:
