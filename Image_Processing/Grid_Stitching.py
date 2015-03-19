@@ -328,14 +328,14 @@ def run_script():
     gridX = {0}
     gridY = {1}
     tile_overlap = {2}
-    input_dir = "{3}"
-    results = "{4}"
-    fusion = "{5}"
-    reg_thresh = {6}
-    max_disp = {7}
-    abs_dip = {8}
-    output_dir = "{9}"
-    sizeZ = {10}
+    input_dir = "/fiji/input"
+    results = "{3}"
+    fusion = "{4}"
+    reg_thresh = {5}
+    max_disp = {6}
+    abs_dip = {7}
+    output_dir = "/fiji/output"
+    sizeZ = {8}
 
     input_data = glob.glob("%s/*.ome.tif"%input_dir)
     original_metadata = MetadataTools.createOMEXMLMetadata()
@@ -345,7 +345,7 @@ def run_script():
     channels = channel_info(original_metadata)
     physX,physY,physZ = pixel_info(original_metadata)
 
-    tile_names = "tile_{11}.ome.tif"
+    tile_names = "tile_{9}.ome.tif"
     args = (gridX,gridY,tile_overlap,input_dir,tile_names, \\
             results,fusion,reg_thresh,max_disp,\\
             abs_dip,output_dir)
@@ -358,17 +358,20 @@ def run_script():
 if __name__=='__main__':
     run_script()""".format(*stitching_args)
 
-
-    script_path = input_dir+"/stitching.py"
+    script = "stitching.py"
+    script_path = input_dir + "/%s"%script
 
     # write the macro to a known location that we can pass to ImageJ
     f = open(script_path, 'w')
     f.write(stitching_script)
     f.close()
 
-    # Call ImageJ via command line, with macro ijm path & parameters
-    cmd = "%s/ImageJ-linux64 --memory=8000m --headless %s" % (IMAGEJPATH, script_path)
-    os.system(cmd)     
+    # Call dockerized Fiji
+    cmd = "docker run --rm -v %s:/fiji/input -v %s:/fiji/output \
+fiji/fiji:latest fiji-linux64 --memory=8000m --headless \
+'/fiji/input/%s'"%(input_dir,output_dir,script)
+    print "docker command",cmd
+    os.system(cmd)   
 
 def run_stitching(conn,session,stitching_args):
     """
@@ -533,18 +536,16 @@ def run_processing(conn, session, script_params):
         results_file = str(image.getId()) + "_stitching.txt"        
         
         stitching_args = (script_params['grid_x'], script_params['grid_y'], \
-                          script_params['tile_overlap'], input_dir, results_file,\
+                          script_params['tile_overlap'], results_file,\
                           script_params['fusion_method'], script_params['regression_threshold'], \
                           script_params['ave_displacement_threshold'], script_params['abs_displacement_threshold'],\
-                          output_dir,sizeZ,"T{i}")
+                          sizeZ,"T{i}")
         
 #         new_image = run_stitching(conn,image,channels,zslices,stitching_args,results_file)
         new_image = run_stitching(conn,session,stitching_args)
-
-        create_containers(conn,image, new_image)
                     
         if new_image:
-#             set_attributes(conn,image, new_image)
+            create_containers(conn,image, new_image)
             new_images.append(new_image)
             new_ids.append(new_image.getId())
      

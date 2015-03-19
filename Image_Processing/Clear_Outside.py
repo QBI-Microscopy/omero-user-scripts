@@ -19,6 +19,7 @@ import re
 import tempfile
 import shutil
 import glob
+import subprocess
 from ome_metadata import OMEExporter
 
 from email.MIMEMultipart import MIMEMultipart
@@ -84,9 +85,7 @@ def create_containers(conn,parent_image,child_image):
     updateService = conn.getUpdateService()
     parentDataset = parent_image.getParent()
     parentProject = parentDataset.getParent()
-    
-    print 'parent dataset:',parentDataset.getId()
-    print 'parent project:',parentProject.getId()     
+        
     if parentDataset is None:
         print "No dataset created or found for new images."\
             " Images will be orphans."
@@ -95,20 +94,7 @@ def create_containers(conn,parent_image,child_image):
         dsLink.parent = omero.model.DatasetI(
             parentDataset.getId(), False)
         dsLink.child = omero.model.ImageI(child_image.getId(), False)
-        datasetObj = updateService.saveObject(dsLink)
-#     if parentProject and parentProject.canLink():
-#         # and put it in the   current project
-# #         projectLink = omero.model.ProjectDatasetLinkI()
-# #         projectLink.parent = omero.model.ProjectI(
-# #             parentProject.getId(), False)
-# #         projectLink.child = omero.model.DatasetI(
-# #             parentDataset.getId(), False)
-# #         updateService.saveAndReturnObject(projectLink) 
-#         
-#         prlink = omero.model.ProjectDatasetLinkI()
-#         prlink.setParent(omero.model.ProjectI(parentProject.getId(), False))
-#         prlink.setChild(datasetObj)
-#         updateService.saveObject(prlink)        
+        datasetObj = updateService.saveObject(dsLink)   
 
 def get_new_image(conn):    
     log = glob.glob(output_dir + '/stdout.txt')
@@ -145,10 +131,10 @@ def do_import(conn, session, filename, dataset=None, project=None):
     newImg = get_new_image(conn)
     return newImg
 
-def run_clearing(conn, session, image, input_path):
+def run_clearing(conn, session, omero_image, input_image):
     
-    image_name = "Image%s_clear.ome.tif" % image.getId()
-    output_path = os.path.join(output_dir,image_name)
+    cleared = "Image%s_clear.ome.tif" % omero_image.getId()
+    output_path = os.path.join(output_dir,cleared)
     print 'output path:',output_path
     clearing_script = """
 import sys
@@ -163,7 +149,7 @@ from loci.formats import ImageReader, ImageWriter
 from loci.formats import MetadataTools
 from ome.xml.meta import OMEXMLMetadata
 
-file = "%s"
+file = "/fiji/input/%s"
 
 options = ImporterOptions()
 options.setId(file)
@@ -182,7 +168,7 @@ if roiCount > 1:
 omeMetaStr =  omeMeta.dumpXML()
 shape = omeMeta.getShapeType(0,0)
 
-if 'Polygon' not in shape:
+if ('Polyline' not in shape):
     sys.exit(0)
 
 prefix = omeMetaStr.index(shape)
@@ -204,7 +190,7 @@ imp.setRoi(proi)
 # create a writer and set metadata
 writer = ImageWriter()
 writer.setMetadataRetrieve(omeMeta)
-writer.setId('%s')
+writer.setId('/fiji/output/%s')
 
 # get the stack
 planes = imp.getStack()
@@ -221,22 +207,28 @@ for p in range(planes.getSize()):
     
 reader.close() 
 writer.close()
-imp.flush()""" % (input_path,output_path)
+imp.flush()""" % (input_image,cleared)
+    
+    script = "clearing.py"
+    script_path = input_dir + "/%s"%script
 
-    script_path = "clearing.py"
-
-    # write the macro to a known location that we can pass to ImageJ
+    # write the script to a known location that we can pass to ImageJ
     f = open(script_path, 'w')
     f.write(clearing_script)
     f.close()
 
-    # Call ImageJ via command line, with macro ijm path & parameters
-    cmd = "%s/ImageJ-linux64 --memory=8000m --headless %s" % (IMAGEJPATH, script_path)
-    os.system(cmd)     
-    
-    cleared = glob.glob('%s/*.tif' % output_dir)
+    # call dockerized Fiji
+    cmd = "docker run --rm -v %s:/fiji/input -v %s:/fiji/output \
+fiji/fiji:latest fiji-linux64 --memory=8000m --headless \
+'/fiji/input/%s'"%(input_dir,output_dir,script)
+    print "docker command",cmd
+    os.system(cmd)
+         
     newImg = None
+    # check for new image
+    cleared = glob.glob('%s/*.tif' % output_dir)
     if cleared:
+        # if it exists upload it
         newImg = do_import(conn,session,cleared[0])
 
     return newImg
@@ -247,7 +239,7 @@ def download_image(conn,image, polys):
     exporter = OMEExporter(conn,image,input_dir,im_name,ROI=polys)
     exporter.generate()
     im_path = os.path.join(input_dir,im_name)
-    return im_path
+    return im_name,im_path
 
 def list_image_names(conn, ids, file_anns):
     """
@@ -319,8 +311,8 @@ def run_processing(conn, session, script_params):
     global input_dir
     global output_dir
 
-    input_dir = tempfile.mkdtemp(prefix='stitching_input')
-    output_dir = tempfile.mkdtemp(prefix='stitching_output')
+    input_dir = tempfile.mkdtemp(prefix='clearing_input')
+    output_dir = tempfile.mkdtemp(prefix='clearing_output')
     
     def empty_dir(dir_path):
         for old_file in os.listdir(dir_path):
@@ -352,22 +344,22 @@ def run_processing(conn, session, script_params):
     
     new_images = []
     new_ids = []
-    for image in conn.getObjects("Image",image_ids):
+    for source in conn.getObjects("Image",image_ids):
         # remove input and processed images
         empty_dir(input_dir)
         empty_dir(output_dir)
         
         # get the polygon rois
-        rects,polys = get_polygons_from_rois(conn, image)
+        rects,polys = get_polygons_from_rois(conn, source)
                     
         # download the image and write polys to metadata
-        input_path = download_image(conn,image,polys)
+        target,target_path = download_image(conn,source,polys)
         
         # run the clearing
-        new_image = run_clearing(conn,session,image,input_path)
+        new_image = run_clearing(conn,session,source,target)
         
         # put images in datasets, datasets in projects
-        create_containers(conn, image, new_image)
+        create_containers(conn, source, new_image)
                     
         if new_image:
 #             set_attributes(conn,image, new_image)
