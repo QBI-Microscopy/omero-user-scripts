@@ -19,6 +19,7 @@ import re
 import tempfile
 import shutil
 import glob
+import subprocess
 from ome_metadata import OMEExporter
 
 from email.MIMEMultipart import MIMEMultipart
@@ -93,20 +94,7 @@ def create_containers(conn,parent_image,child_image):
         dsLink.parent = omero.model.DatasetI(
             parentDataset.getId(), False)
         dsLink.child = omero.model.ImageI(child_image.getId(), False)
-        datasetObj = updateService.saveObject(dsLink)
-#     if parentProject and parentProject.canLink():
-#         # and put it in the   current project
-# #         projectLink = omero.model.ProjectDatasetLinkI()
-# #         projectLink.parent = omero.model.ProjectI(
-# #             parentProject.getId(), False)
-# #         projectLink.child = omero.model.DatasetI(
-# #             parentDataset.getId(), False)
-# #         updateService.saveAndReturnObject(projectLink) 
-#         
-#         prlink = omero.model.ProjectDatasetLinkI()
-#         prlink.setParent(omero.model.ProjectI(parentProject.getId(), False))
-#         prlink.setChild(datasetObj)
-#         updateService.saveObject(prlink)        
+        datasetObj = updateService.saveObject(dsLink)   
 
 def get_new_image(conn):    
     log = glob.glob(output_dir + '/stdout.txt')
@@ -180,7 +168,7 @@ if roiCount > 1:
 omeMetaStr =  omeMeta.dumpXML()
 shape = omeMeta.getShapeType(0,0)
 
-if ('Polygon' not in shape) or ('Polyline' not in shape):
+if ('Polyline' not in shape):
     sys.exit(0)
 
 prefix = omeMetaStr.index(shape)
@@ -224,22 +212,23 @@ imp.flush()""" % (input_image,cleared)
     script = "clearing.py"
     script_path = input_dir + "/%s"%script
 
-    # write the macro to a known location that we can pass to ImageJ
+    # write the script to a known location that we can pass to ImageJ
     f = open(script_path, 'w')
     f.write(clearing_script)
     f.close()
 
-    # Call ImageJ via command line, with macro ijm path & parameters
-    #cmd = "%s/ImageJ-linux64 --memory=8000m --headless %s" % (IMAGEJPATH, script_path)
     # call dockerized Fiji
-    cmd = "docker run --rm -v %s:/fiji/input -v %s:/fiji/output fiji/fiji fiji-linux64 \
---memory=8000m --headless '/fiji/input/%s'"%(input_dir,output_dir,script)
+    cmd = "docker run --rm -v %s:/fiji/input -v %s:/fiji/output \
+fiji/fiji:latest fiji-linux64 --memory=8000m --headless \
+'/fiji/input/%s'"%(input_dir,output_dir,script)
     print "docker command",cmd
-    os.system(cmd)     
-    
-    cleared = glob.glob('%s/*.tif' % output_dir)
+    os.system(cmd)
+         
     newImg = None
+    # check for new image
+    cleared = glob.glob('%s/*.tif' % output_dir)
     if cleared:
+        # if it exists upload it
         newImg = do_import(conn,session,cleared[0])
 
     return newImg
