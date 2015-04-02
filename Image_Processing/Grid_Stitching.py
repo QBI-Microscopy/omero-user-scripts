@@ -225,7 +225,8 @@ def write_fused(output_path,channels,physX,physY,physZ,sizeZ):
         digits = "0"
     if sizeZ < 10:
         digits = ""
-
+    sizeC = len(channels)
+    
     # get the base metadata from the first fused image
     meta = MetadataTools.createOMEXMLMetadata()
     reader = get_reader(output_path+"/img_t1_z1_c1",meta)
@@ -236,6 +237,7 @@ def write_fused(output_path,channels,physX,physY,physZ,sizeZ):
     meta.setPixelsPhysicalSizeY(physY,0)
     meta.setPixelsPhysicalSizeZ(physZ,0)
     meta.setPixelsSizeZ(PositiveInteger(sizeZ),0)
+    meta.setPixelsSizeC(PositiveInteger(sizeC),0)
     
     for c,channel in enumerate(channels):
         meta.setChannelID("Channel:0:" + str(c), 0, 0)
@@ -248,7 +250,7 @@ def write_fused(output_path,channels,physX,physY,physZ,sizeZ):
         
     # determine the number of subsets that need to be written
     slices_per_subset = 200
-    sizeC = len(channels)
+
     num_output_files = divmod(sizeZ,slices_per_subset)
     fpaths = []
     if num_output_files[0] == 0:
