@@ -280,7 +280,7 @@ def write_fused(output_path,channels,physX,physY,physZ,sizeZ):
         meta.setImageName(os.path.basename(fpaths[f]),0)
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
-            for c in range(sizeC):
+            for theC in range(sizeC):
                 fpath = output_path+"/img_t1_z%s%s_c%s"%(digits,str(theZ+1),str(theC))
                 if (len(digits) == 1) and (theZ+1 > 9):
                     fpath = output_path+"/img_t1_z%s_c%s"%(str(theZ+1),str(theC))
