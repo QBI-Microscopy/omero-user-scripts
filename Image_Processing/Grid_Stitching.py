@@ -217,7 +217,7 @@ def delete_slices(slices_dir):
     except:
         pass 
     
-def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
+def write_fused(output_path,channels,physX,physY,physZ,sizeZ):
 
     # number of slices will determine filename format
     digits = "00"
@@ -236,16 +236,19 @@ def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
     meta.setPixelsPhysicalSizeY(physY,0)
     meta.setPixelsPhysicalSizeZ(physZ,0)
     meta.setPixelsSizeZ(PositiveInteger(sizeZ),0)
-    meta.setChannelID("Channel:0:" + str(0), 0, 0)
-    spp = channel['spp']
-    meta.setChannelSamplesPerPixel(spp, 0, 0)
-    name = channel['name']
-    color = channel['color']
-    meta.setChannelName(name,0,0)
-    meta.setChannelColor(color,0,0)
+    
+    for c,channel in enumerate(channels):
+        meta.setChannelID("Channel:0:" + str(c), 0, 0)
+        spp = channel['spp']
+        meta.setChannelSamplesPerPixel(spp, 0, 0)
+        name = channel['name']
+        color = channel['color']
+        meta.setChannelName(name,0,0)
+        meta.setChannelColor(color,0,0)
         
     # determine the number of subsets that need to be written
     slices_per_subset = 200
+    sizeC = len(channels)
     num_output_files = divmod(sizeZ,slices_per_subset)
     fpaths = []
     if num_output_files[0] == 0:
@@ -262,7 +265,7 @@ def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
             nslices.append(num_output_files[1])        
         
         for s in range(len(nslices)):
-            fpaths.append("%s/fused_C%s_subset%s.ome.tif"%(output_path,str(theC-1),str(s)))
+            fpaths.append("%s/fused_subset%s.ome.tif"%(output_path,str(s)))
 
     # setup a writer
     writer = ImageWriter()
@@ -271,22 +274,25 @@ def write_fused(output_path,channel,physX,physY,physZ,sizeZ):
     writer.setId(fpaths[0])
 
     # write the slices, changing the output file when necessary
+    plane = 0
     theZ = 0
     for f in range(len(fpaths)):
         meta.setImageName(os.path.basename(fpaths[f]),0)
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
-            fpath = output_path+"/img_t1_z%s%s_c1"%(digits,str(theZ+1))
-            if (len(digits) == 1) and (theZ+1 > 9):
-                fpath = output_path+"/img_t1_z%s_c1"%(str(theZ+1))
-            if (len(digits) == 2) and (theZ+1 > 9):
-                fpath = output_path+"/img_t1_z0%s_c1"%(str(theZ+1))
-            if (len(digits) == 2) and (theZ+1 > 99):
-                fpath = output_path+"/img_t1_z%s_c1"%(str(theZ+1))
-            m = MetadataTools.createOMEXMLMetadata()
-            r = get_reader(fpath,m)
-            writer.saveBytes(theZ,r.openBytes(0))
-            r.close()
+            for c in range(sizeC):
+                fpath = output_path+"/img_t1_z%s%s_c%s"%(digits,str(theZ+1),str(theC))
+                if (len(digits) == 1) and (theZ+1 > 9):
+                    fpath = output_path+"/img_t1_z%s_c%s"%(str(theZ+1),str(theC))
+                if (len(digits) == 2) and (theZ+1 > 9):
+                    fpath = output_path+"/img_t1_z0%s_c%s"%(str(theZ+1),str(theC))
+                if (len(digits) == 2) and (theZ+1 > 99):
+                    fpath = output_path+"/img_t1_z%s_c%s"%(str(theZ+1),str(theC))
+                m = MetadataTools.createOMEXMLMetadata()
+                r = get_reader(fpath,m)
+                writer.saveBytes(plane,r.openBytes(0))
+                r.close()
+                plane += 1
             theZ += 1
     writer.close()
     
@@ -352,7 +358,7 @@ def run_script():
             abs_dip,output_dir)
     run_stitching(args)
         
-    write_fused(output_dir,channels[0],physX,physY,physZ,sizeZ)
+    write_fused(output_dir,channels,physX,physY,physZ,sizeZ)
 
     delete_slices(input_dir)
     
