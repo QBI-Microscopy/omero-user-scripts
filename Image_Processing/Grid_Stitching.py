@@ -116,14 +116,14 @@ def create_containers(conn,parent_image,child_image):
             parentDataset.getId(), False)
         dsLink.child = omero.model.ImageI(child_image.getId(), False)
         updateService.saveObject(dsLink)
-    if parentProject and parentProject.canLink():
-        # and put it in the   current project
-        projectLink = omero.model.ProjectDatasetLinkI()
-        projectLink.parent = omero.model.ProjectI(
-            parentProject.getId(), False)
-        projectLink.child = omero.model.DatasetI(
-            parentDataset.id.val, False)
-        updateService.saveAndReturnObject(projectLink) 
+#     if parentProject and parentProject.canLink():
+#         # and put it in the   current project
+#         projectLink = omero.model.ProjectDatasetLinkI()
+#         projectLink.parent = omero.model.ProjectI(
+#             parentProject.getId(), False)
+#         projectLink.child = omero.model.DatasetI(
+#             parentDataset.id.val, False)
+#         updateService.saveAndReturnObject(projectLink) 
 
 def print_obj(obj, indent=0):
     """
