@@ -281,13 +281,13 @@ def write_fused(output_path,channels,physX,physY,physZ,sizeZ):
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
             for theC in range(sizeC):
-                fpath = output_path+"/img_t1_z%s%s_c%s"%(digits,str(theZ+1),str(theC))
+                fpath = output_path+"/img_t1_z%s%s_c%s"%(digits,str(theZ+1),str(theC+1))
                 if (len(digits) == 1) and (theZ+1 > 9):
-                    fpath = output_path+"/img_t1_z%s_c%s"%(str(theZ+1),str(theC))
+                    fpath = output_path+"/img_t1_z%s_c%s"%(str(theZ+1),str(theC+1))
                 if (len(digits) == 2) and (theZ+1 > 9):
-                    fpath = output_path+"/img_t1_z0%s_c%s"%(str(theZ+1),str(theC))
+                    fpath = output_path+"/img_t1_z0%s_c%s"%(str(theZ+1),str(theC+1))
                 if (len(digits) == 2) and (theZ+1 > 99):
-                    fpath = output_path+"/img_t1_z%s_c%s"%(str(theZ+1),str(theC))
+                    fpath = output_path+"/img_t1_z%s_c%s"%(str(theZ+1),str(theC+1))
                 m = MetadataTools.createOMEXMLMetadata()
                 r = get_reader(fpath,m)
                 writer.saveBytes(plane,r.openBytes(0))
