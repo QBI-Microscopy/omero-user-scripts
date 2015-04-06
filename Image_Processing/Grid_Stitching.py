@@ -208,6 +208,7 @@ from loci.common import RandomAccessInputStream
 from loci.common import RandomAccessOutputStream
 from loci.formats.tiff import TiffSaver
 
+from ome.xml.model.enums import DimensionOrder
 from ome.xml.model.primitives import PositiveInteger
 
 def delete_slices(slices_dir):
