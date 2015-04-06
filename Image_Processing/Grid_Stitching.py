@@ -374,7 +374,7 @@ def run_script():
             abs_dip,output_dir)
     run_stitching(args)
         
-    write_fused(output_dir,channels,physX,physY,physZ,sizeZ)
+    write_fused(output_dir,channels,sizeX,sizeY,physX,physY,physZ,sizeZ,pixType)
 
     delete_slices(input_dir)
     
