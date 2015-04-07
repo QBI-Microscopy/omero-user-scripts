@@ -216,9 +216,14 @@ def delete_slices(slices_dir):
         for name in glob.glob("%s/img*"%slices_dir):
             os.remove(name)
     except:
-        pass 
+        pass
+        
+def fused_size_info(meta):
+    szeX = meta.getPixelsSizeX(0)
+    szeY = meta.getPixelsSizeY(0)
+    return szeX,szeY 
     
-def write_fused(output_path,channels,sizeX,sizeY,physX,physY,physZ,sizeZ,pixType):
+def write_fused(output_path,channels,physX,physY,physZ,sizeZ,pixType):
 
     # number of slices will determine filename format
     digits = "00"
@@ -228,35 +233,6 @@ def write_fused(output_path,channels,sizeX,sizeY,physX,physY,physZ,sizeZ,pixType
         digits = ""
     sizeC = len(channels)
 
-    # make ome-xml metadata
-    meta = MetadataTools.createOMEXMLMetadata()
-    print meta.dumpXML()
-    
-    # reset some metadata
-    meta.setImageID("Image:0", 0)
-    meta.setPixelsID("Pixels:0", 0)
-    meta.setPixelsBinDataBigEndian(False,0,0)
-    meta.setPixelsDimensionOrder(DimensionOrder.XYCZT,0)
-    meta.setPixelsType(pixType, 0);
-    meta.setPixelsPhysicalSizeX(physX,0)
-    meta.setPixelsPhysicalSizeY(physY,0)
-    meta.setPixelsPhysicalSizeZ(physZ,0)
-    meta.setPixelsSizeX(sizeX,0)
-    meta.setPixelsSizeY(sizeY,0)
-    meta.setPixelsSizeZ(PositiveInteger(sizeZ),0)
-    meta.setPixelsSizeC(PositiveInteger(sizeC),0)
-    meta.setPixelsSizeT(PositiveInteger(1),0) 
-    
-    for c,channel in enumerate(channels):
-
-        meta.setChannelID("Channel:0:" + str(c), 0, c)
-        spp = channel['spp']
-        meta.setChannelSamplesPerPixel(spp, 0, c)
-        name = channel['name']
-        color = channel['color']
-        meta.setChannelName(name,0,c)
-        meta.setChannelColor(color,0,c)
-        
     # determine the number of subsets that need to be written
     slices_per_subset = 200
 
@@ -278,7 +254,40 @@ def write_fused(output_path,channels,sizeX,sizeY,physX,physY,physZ,sizeZ,pixType
         for s in range(len(nslices)):
             fpaths.append("%s/fused_subset%s.ome.tif"%(output_path,str(s)))
 
-    print 'fpaths', fpaths[0]
+    first_fused = output_path+"/img_t1_z%s%s_c%s"%(digits,str(1),str(1))
+    fused_metadata = MetadataTools.createOMEXMLMetadata()
+    reader = get_reader(first_fused,fused_metadata)
+    reader.close()
+    sizeX,sizeY = fused_size_info(fused_metadata)
+
+    # make ome-xml metadata
+    meta = MetadataTools.createOMEXMLMetadata()
+    
+    # set minimal metadata
+    meta.setImageID("Image:0", 0)
+    meta.setPixelsID("Pixels:0", 0)
+    meta.setPixelsBinDataBigEndian(True,0,0)
+    meta.setPixelsDimensionOrder(DimensionOrder.XYCZT,0)
+    meta.setPixelsType(pixType, 0)
+    meta.setPixelsPhysicalSizeX(physX,0)
+    meta.setPixelsPhysicalSizeY(physY,0)
+    meta.setPixelsPhysicalSizeZ(physZ,0)
+    meta.setPixelsSizeX(sizeX,0)
+    meta.setPixelsSizeY(sizeY,0)
+    meta.setPixelsSizeZ(PositiveInteger(sizeZ),0)
+    meta.setPixelsSizeC(PositiveInteger(sizeC),0)
+    meta.setPixelsSizeT(PositiveInteger(1),0) 
+    
+    for c,channel in enumerate(channels):
+
+        meta.setChannelID("Channel:0:" + str(c), 0, c)
+        spp = channel['spp']
+        meta.setChannelSamplesPerPixel(spp, 0, c)
+        name = channel['name']
+        color = channel['color']
+        meta.setChannelName(name,0,c)
+        meta.setChannelColor(color,0,c)
+        
     # setup a writer
     writer = ImageWriter()
     writer.setCompression('LZW')
@@ -294,7 +303,7 @@ def write_fused(output_path,channels,sizeX,sizeY,physX,physY,physZ,sizeZ,pixType
         writer.changeOutputFile(fpaths[f])
         for s in range(nslices[f]):
             for theC in range(sizeC):
-                #print plane
+                print plane
                 fpath = output_path+"/img_t1_z%s%s_c%s"%(digits,str(theZ+1),str(theC+1))
                 if (len(digits) == 1) and (theZ+1 > 9):
                     fpath = output_path+"/img_t1_z%s_c%s"%(str(theZ+1),str(theC+1))
@@ -322,13 +331,11 @@ def run_stitching(args):
             "image_output=[Write to disk] output_directory=[%s]"%args)
             
 def pixel_info(meta):
-    szeX = meta.getPixelsSizeX(0)
-    szeY = meta.getPixelsSizeY(0)
     physX = meta.getPixelsPhysicalSizeX(0)
     physY = meta.getPixelsPhysicalSizeY(0)
     physZ = meta.getPixelsPhysicalSizeZ(0)
     pixType = meta.getPixelsType(0)
-    return szeX,szeY,physX,physY,physZ,pixType
+    return physX,physY,physZ,pixType
             
 def channel_info(meta):
     sizeC = meta.getPixelsSizeC(0).getValue()
@@ -361,13 +368,13 @@ def run_script():
     output_dir = "/fiji/output"
     sizeZ = {8}
 
-    input_data = glob.glob("%s/*.ome.tif"%input_dir)
-    original_metadata = MetadataTools.createOMEXMLMetadata()
-    reader = get_reader(input_data[0],original_metadata)
+    tile_data = glob.glob("%s/*.ome.tif"%input_dir)
+    tile_metadata = MetadataTools.createOMEXMLMetadata()
+    reader = get_reader(tile_data[0],tile_metadata)
     reader.close()
 
-    channels = channel_info(original_metadata)
-    sizeX,sizeY,physX,physY,physZ,pixType = pixel_info(original_metadata)
+    channels = channel_info(tile_metadata)
+    physX,physY,physZ,pixType = pixel_info(tile_metadata)
 
     tile_names = "tile_{9}.ome.tif"
     args = (gridX,gridY,tile_overlap,input_dir,tile_names, \\
@@ -375,7 +382,7 @@ def run_script():
             abs_dip,output_dir)
     run_stitching(args)
         
-    write_fused(output_dir,channels,sizeX,sizeY,physX,physY,physZ,sizeZ,pixType)
+    write_fused(output_dir,channels,physX,physY,physZ,sizeZ,pixType)
 
     delete_slices(input_dir)
     
