@@ -114,7 +114,7 @@ from loci.formats import ImageReader, ImageWriter
 from loci.formats import MetadataTools
 from ome.xml.meta import OMEXMLMetadata
 
-file = "%s"
+file = "/fiji/input/%s"
 
 options = ImporterOptions()
 options.setId(file)
@@ -133,7 +133,7 @@ if roiCount > 1:
 omeMetaStr =  omeMeta.dumpXML()
 shape = omeMeta.getShapeType(0,0)
 
-if 'Polygon' not in shape:
+if ('Polyline' not in shape):
     sys.exit(0)
 
 prefix = omeMetaStr.index(shape)
@@ -142,13 +142,11 @@ start = len(shape + " " + "points=") + 1
 
 pts = omeMetaStr[start+prefix:stop]
 
-new_pts_str = pts.replace(" ",",")
+new_pts_str =pts.replace(" ",",")
 new_pts = [int(p) for p in new_pts_str.split(",")]
 
 xs = new_pts[0::2]
-xs = [x-%d for x in xs]
 ys = new_pts[1::2]
-ys = [y-%d for y in ys]
 
 proi = PolygonRoi(xs, ys, len(xs), Roi.POLYGON)  
 imp = imps[0]
@@ -157,7 +155,7 @@ imp.setRoi(proi)
 # create a writer and set metadata
 writer = ImageWriter()
 writer.setMetadataRetrieve(omeMeta)
-writer.setId('%s')
+writer.setId('/fiji/output/%s')
 
 # get the stack
 planes = imp.getStack()
@@ -174,19 +172,22 @@ for p in range(planes.getSize()):
     
 reader.close() 
 writer.close()
-imp.flush()""" % (input_path,originx,originy,output_path)
+imp.flush()""" % (input_image,cleared)
 
-    script_name = "clearing.py"
-    script_path = os.path.join(input_dir,script_name)
+    script = "clearing.py"
+    script_path = input_dir + "/%s"%script
 
     # write the script to a known location that we can pass to ImageJ
     f = open(script_path, 'w')
     f.write(clearing_script)
     f.close()
 
-    # Call ImageJ via command line, with script path
-    cmd = "%s/ImageJ-linux64 --memory=8000m --headless %s" % (IMAGEJPATH, script_path)
-    os.system(cmd)     
+    # call dockerized Fiji
+    cmd = "docker run --rm -v %s:/fiji/input -v %s:/fiji/output \
+fiji/fiji:latest fiji-linux64 --memory=8000m --headless \
+'/fiji/input/%s'"%(input_dir,output_dir,script)
+    print "docker command",cmd
+    os.system(cmd)
     
     cleared = glob.glob('%s/*.tif' % output_dir)
     if cleared:
