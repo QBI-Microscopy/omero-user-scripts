@@ -458,6 +458,7 @@ def process_image(conn, parent_id, script_params, session):
             updateService.saveAndReturnObject(projectLink)
             
     shutil.rmtree(input_dir)
+    shutil.rmtree(output_dir)
     
     return children, dataset, link, child_ids
 
