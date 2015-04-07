@@ -146,7 +146,9 @@ new_pts_str =pts.replace(" ",",")
 new_pts = [int(p) for p in new_pts_str.split(",")]
 
 xs = new_pts[0::2]
+xs = [x-%d for x in xs]
 ys = new_pts[1::2]
+ys = [y-%d for y in ys]
 
 proi = PolygonRoi(xs, ys, len(xs), Roi.POLYGON)  
 imp = imps[0]
@@ -172,7 +174,7 @@ for p in range(planes.getSize()):
     
 reader.close() 
 writer.close()
-imp.flush()""" % (input_image,cleared)
+imp.flush()""" % (image_name,originx,originy,image_name)
 
     script = "clearing.py"
     script_path = input_dir + "/%s"%script
