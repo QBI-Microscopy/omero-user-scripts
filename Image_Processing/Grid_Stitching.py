@@ -597,7 +597,7 @@ def run_processing(conn, session, script_params):
     if script_params['Email_Results'] and new_images:
         email_results(conn,script_params,new_ids)
         
-    shutil.rmtree(input_dir)
+#     shutil.rmtree(input_dir)
 #     shutil.rmtree(output_dir)
 # 
     robj = (len(new_images) > 0) and new_images[0]._obj or None
