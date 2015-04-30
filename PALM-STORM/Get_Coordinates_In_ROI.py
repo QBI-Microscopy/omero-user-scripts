@@ -117,8 +117,8 @@ def get_rectangles(conn, imageId):
     im = conn.getObject('Image',imageId)
     pixels = im.getPrimaryPixels()
     # note pixel sizes (if available) to set for the new images
-    physX = pixels.getPhysicalSizeX()*1000.0 #need this in nm
-    physY = pixels.getPhysicalSizeY()*1000.0 #need this in nm
+    physX = pixels.getPhysicalSizeX().value()*1000.0 #need this in nm
+    physY = pixels.getPhysicalSizeY().value()*1000.0 #need this in nm
     print 'physicalSizeX:',physX
     print 'physicalSizeY:',physY
     
