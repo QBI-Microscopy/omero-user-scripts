@@ -37,10 +37,10 @@ def run_processing(conn, script_params):
         pixels = pixelsWrapper._obj
         
         # Update and save
-        pixels.setPhysicalSizeX( rdouble(physical_x) )
-        pixels.setPhysicalSizeY( rdouble(physical_y) )
+        pixels.physicalSizeX.setValue( rdouble(physical_x) )
+        pixels.physicalSizeY.setValue( rdouble(physical_y) )
         if physical_z:
-            pixels.setPhysicalSizeZ( rdouble(physical_z) )
+            pixels.physicalSizeZ.setValue( rdouble(physical_z) )
         conn.getUpdateService().saveObject(pixels)
         message += 'Successfully set pixel size on image %s' %image.getName()
     return message
