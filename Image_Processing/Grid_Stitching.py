@@ -50,9 +50,9 @@ def set_attributes(conn,parent_image,child):
     updateService = conn.getUpdateService()
     parent_pixels = parent_image.getPrimaryPixels()
     # note pixel sizes (if available) to set for the new images
-    physicalSizeX = parent_pixels.getPhysicalSizeX()
-    physicalSizeY = parent_pixels.getPhysicalSizeY()
-    physicalSizeZ = parent_pixels.getPhysicalSizeZ()
+    physicalSizeX = parent_pixels.physicalSizeX.getValue()
+    physicalSizeY = parent_pixels.physicalSizeY.getValue()
+    physicalSizeZ = parent_pixels.physicalSizeZ.getValue()
     
     child_image = conn.getObject("Image", child.getId())
     
@@ -61,13 +61,13 @@ def set_attributes(conn,parent_image,child):
     child_pixels = pixelsWrapper._obj
     
     if physicalSizeX is not None:
-        child_pixels.setPhysicalSizeX( rdouble(physicalSizeX) )
+        child_pixels.physicalSizeX.setValue( rdouble(physicalSizeX) )
         
     if physicalSizeY is not None:
-        child_pixels.setPhysicalSizeY( rdouble(physicalSizeY) )
+        child_pixels.physicalSizeY.setValue( rdouble(physicalSizeY) )
         
     if physicalSizeZ is not None:
-        child_pixels.setPhysicalSizeZ( rdouble(physicalSizeZ) )
+        child_pixels.physicalSizeZ.setValue( rdouble(physicalSizeZ) )
         
     ptype = parent_pixels.getPixelsType().getValue()
     print "pixels type:",ptype

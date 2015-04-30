@@ -93,8 +93,8 @@ def get_rectangles(conn, imageId):
     im = conn.getObject('Image',imageId)
     pixels = im.getPrimaryPixels()
     # note pixel sizes (if available) to set for the new images
-    physX = pixels.getPhysicalSizeX()*1000.0
-    physY = pixels.getPhysicalSizeY()*1000.0
+    physX = pixels.physicalSizeX.getValue()*1000.0
+    physY = pixels.physicalSizeY.getValue()*1000.0
     
     for roi in result.rois:
         zStart = None
