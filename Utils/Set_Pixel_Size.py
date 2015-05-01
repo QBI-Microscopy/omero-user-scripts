@@ -5,7 +5,8 @@ import omero.util.script_utils as script_util
 from omero.gateway import BlitzGateway
 import omero
 from omero.rtypes import *
-
+from omero.model import LengthI
+from omero.model.enums import UnitsLength
 
 def run_processing(conn, script_params):
     message = ""
@@ -37,10 +38,14 @@ def run_processing(conn, script_params):
         pixels = pixelsWrapper._obj
         
         # Update and save
-        pixels.physicalSizeX.setValue( rdouble(physical_x) )
-        pixels.physicalSizeY.setValue( rdouble(physical_y) )
+        print "units",UnitsLength
+        lx = LengthI(physical_x, UnitsLength.MICROMETER)
+        ly = LengthI(physical_y, UnitsLength.MICROMETER)
+        pixels.setPhysicalSizeX(lx)
+        pixels.setPhysicalSizeY(ly)
         if physical_z:
-            pixels.physicalSizeZ.setValue( rdouble(physical_z) )
+            lz = LengthI(physical_z, UnitsLength.MICROMETER)
+            pixels.setPhysicalSizeZ(lz)
         conn.getUpdateService().saveObject(pixels)
         message += 'Successfully set pixel size on image %s' %image.getName()
     return message
