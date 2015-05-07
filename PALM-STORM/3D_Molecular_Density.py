@@ -6,6 +6,8 @@ import time
 import numpy
 import omero.scripts as scripts
 import omero.util.script_utils as script_util
+from omero.model import LengthI
+from omero.model.enums import UnitsLength
 from random import random
 import math
 from numpy import array,histogramdd
@@ -238,11 +240,11 @@ def process_data(conn,image,file_type,file_id,locs,sr_pix_size,srz_pix_size,z_ra
     pixels = pixelsWrapper._obj
     
     # Update and save
-    pixSize = rdouble(float(sr_pix_size) / 1000)      # in microns
-    pixSizeZ = rdouble(float(srz_pix_size) / 1000)      # in microns
+    pixSize = LengthI(rdouble(float(sr_pix_size) / 1000), UnitsLength.MICROMETER)
+    pixSizeZ = LengthI(rdouble(float(srz_pix_size) / 1000), UnitsLength.MICROMETER)
     pixels.setPhysicalSizeX( pixSize )
     pixels.setPhysicalSizeY( pixSize )
-    pixels.setPhysicalSizeZ( pixSizeZ )
+    pixels.setPhysicalSizeZ( pixSize )
     updateService.saveObject(pixels)    
 
     if newImg:
@@ -307,10 +309,10 @@ def run_processing(conn,script_params):
     file_type = FILE_TYPES[script_params['File_Type']]
 
     pixels = image.getPrimaryPixels()
-    physicalSizeX = math.ceil(pixels.getPhysicalSizeX()*1000.0)
-    physicalSizeY = math.ceil(pixels.getPhysicalSizeY()*1000.0)
+    physicalSizeX = math.ceil(pixels.physicalSizeX.getValue()*1000.0)
+    physicalSizeY = math.ceil(pixels.physicalSizeY.getValue()*1000.0)
     if pixels.getPhysicalSizeZ():
-        physicalSizeZ = math.ceil(pixels.getPhysicalSizeZ()*1000.0)
+        physicalSizeZ = math.ceil(pixels.physicalSizeZ.getValue()*1000.0)
         z_range = 4000.0 # hardwired z range for zeiss 3d data
     else:
         physicalSizeZ = 1000.0
