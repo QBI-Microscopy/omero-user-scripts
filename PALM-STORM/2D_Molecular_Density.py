@@ -309,7 +309,7 @@ def process_data(conn,image,file_type,file_id,coords,sr_pix_size,nm_per_pixel):
     pixels = pixelsWrapper._obj
     
     # Update and save
-    pixSize = LengthI(rdouble(float(sr_pix_size) / 1000), UnitsLength.MICROMETER)
+    pixSize = LengthI(float(sr_pix_size) / 1000, UnitsLength.MICROMETER)
     pixels.setPhysicalSizeX( pixSize )
     pixels.setPhysicalSizeY( pixSize )
     
