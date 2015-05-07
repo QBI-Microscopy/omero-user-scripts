@@ -6,6 +6,8 @@ import time
 import numpy as np
 import omero.scripts as scripts
 import omero.util.script_utils as script_util
+from omero.model import LengthI
+from omero.model.enums import UnitsLength
 from random import random
 import math
 from numpy import array,histogramdd
@@ -307,7 +309,7 @@ def process_data(conn,image,file_type,file_id,coords,sr_pix_size,nm_per_pixel):
     pixels = pixelsWrapper._obj
     
     # Update and save
-    pixSize = rdouble(float(sr_pix_size) / 1000)      # in microns
+    pixSize = LengthI(rdouble(float(sr_pix_size) / 1000), UnitsLength.MICROMETER)
     pixels.setPhysicalSizeX( pixSize )
     pixels.setPhysicalSizeY( pixSize )
     
@@ -376,8 +378,8 @@ def run_processing(conn,script_params):
         physicalSizeY = script_params['Parent_Image_Pixel_Size']
     else:
         pixels = image.getPrimaryPixels()
-        physicalSizeX = math.ceil(pixels.getPhysicalSizeX()*1000)
-        physicalSizeY = math.ceil(pixels.getPhysicalSizeY()*1000)
+        physicalSizeX = math.ceil(pixels.physicalSizeX.getValue()*1000.0)
+        physicalSizeY = math.ceil(pixels.physicalSizeY.getValue()*1000.0)
         
         if (physicalSizeX is None) or (physicalSizeY is None):
             message = 'physical pixel size required'
