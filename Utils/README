@@ -1,0 +1,5 @@
+Utility scripts written by Daniel Matthews, QBI
+
+1. Set_Pixel_Size.py
+
+This script should be used with caution - it allows a user to change the pixel scale associated with an image. This is useful in cases where an image is saved without any pixel scale; for example TIFFs produced by Zen Black.
