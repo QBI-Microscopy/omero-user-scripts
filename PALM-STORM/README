@@ -1,0 +1,53 @@
+Utility and analysis scripts for localistion microscopy data
+
+Written by Daniel Matthews, QBI
+
+1. Get_Coordinates_In_ROI.py
+
+This script extracts the XY-coordinates from OMERO ROIs created on reconstructed super resolution images.
+The data table of coordinates should be attached (annotated) to the image being processed. The user supplies
+the image ID and annotation ID of the data table. The script attaches the extracted coordinates to the image
+being processed as a CSV file.
+
+2. Localisation_Density_In_ROIs.py
+
+This script calculates the density of localisations within OMERO ROIs created on reconstructed super resolution
+images. The data table of coordinates should be attached (annotated) to the image being processed. The user supplies the image ID and annotation ID of the data table. The script attaches the calculated density at each
+position to the image being processed as a CSV file.
+
+3. Nearest_Neighbours_In_ROIs.py
+
+This script calculates the number of neighbours around each localisation within OMERO ROIs created on reconstructed super resolution images. The data table of coordinates should be attached (annotated) to the image being processed. The user supplies the image ID and annotation ID of the data table. The script attaches the calculated number of near neighbours at each XY-coordinate to the image being processed as a CSV file.
+
+4. Scatter_Histogram.py
+
+This script calculates a scatter histogram (a separate histogram in the X- and Y-direction) for the XY-coordinates within OMERO ROIs created on reconstructed super resolution images. The user supplies the image ID and annotation ID of the data table. The script attaches the calculated histograms to the image being processed as a CSV file.
+
+5. 2D_Molecular_Density.py
+
+This script calculates a 2D histogram (molecular density, reconstructed super resolution image) from XY-coordinates attached to a raw time-series of localisation microscopy data. The data table of coordinates should be attached (annotated) to the image being processed. The user supplies the image ID, the annotation ID of the data table and the pixel size (bin size of histogram) for the reconstructed image. 
+
+6. 3D_Molecular_Density.py
+
+As 2D_Molecular_Density.py but makes a 3D histogram.
+
+7. 2D_Molecular_Density_Timelapse.py
+
+As 2D_Molecular_Density.py but allows the user to slice up the data set to make a time-lapse sequence.
+
+8. Ripley_Function.py
+
+This script calculates spatial statistics using the Ripley L function. The data table of coordinates should be attached (annotated) to the image being processed. The user supplies the image ID, annotation ID of the data table and the maximum distance scale over which to calculate the Ripley function. This calculation is based on the following publication:
+
+Owen et al., "PALM imaging and cluster analysis of protein heterogeneity at the cell surface", Journal of Biophotonics, 3, 446-454, 2010
+
+9. Ripley_Function_Map.py
+
+As Ripley_Function.py but calculates the Ripley L function at each XY coordinate at a single distance scale provided by the user. Should be used in conjunction with Ripley_Function.py to provide guidance on which distance scale to select.
+
+10. Pair_Correlation_Function.py
+
+This script calculates spatial statistics using a pair (auto) correlation analysis. The data table of coordinates should be attached (annotated) to the image being processed. The user supplies the image ID, annotation ID of the data table and the maximum distance scale over which to calculate the pair correlation. This calculation is based on the following publication:
+
+Veatch et al., "Correlation Functions Quantify Super-Resolution Images and Estimate Apparent Clustering Due to Over-Counting", PlosOne, 2012, DOI: 10.1371/journal.pone.0031457
+
