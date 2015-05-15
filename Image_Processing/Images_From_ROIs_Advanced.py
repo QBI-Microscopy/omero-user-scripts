@@ -601,11 +601,11 @@ creation of arbitrary shaped regions.
     
     scripts.Bool(
         "Select_Channels", grouping="4", default=False,
-        description="Make a new dataset for the ROIs"),
+        description="Specify channels?"),
                                                         
     scripts.List(
         "Channels", grouping="4.1",
-        description="A list of channels to extract").ofType(rlong(0)),
+        description="A list of channels to extract - integers channel numbers starting at 0").ofType(rlong(0)),
                             
     scripts.Bool(
         "New_Dataset", grouping="5", default=False,
