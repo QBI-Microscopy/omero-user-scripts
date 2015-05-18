@@ -427,8 +427,8 @@ def run_as_script():
     
     fileTypes = [k for k in FILE_TYPES.iterkeys()]
 
-    client = scripts.client('Nearest_Neighbours_In_ROIs.py', """This script calculates nearest nieghbour distances from localisations in a region of interest.
-Do not need to convert Zeiss data to nm. Only use with super resolved images where the physical pixel size is set (CZI or OME-TIFF)""",
+    client = scripts.client('Nearest_Neighbours_In_ROIs.py', """This script calculates near nieghbour distances for each 
+localisation in an OMERO ROI. Do not use `Convert coordinates to nm` option on Zeiss data.""",
 
     scripts.String("Data_Type", optional=False, grouping="01",
         description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
