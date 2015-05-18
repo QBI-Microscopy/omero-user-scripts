@@ -619,8 +619,9 @@ def run_as_script():
     
     fileTypes = [k for k in FILE_TYPES.iterkeys()]
 
-    client = scripts.client('Ripley_Lfunction.py', """This script calculates the ripley l statistic for ROIs in a reconstructed super resolution image. 
-Do not need to convert Zeiss data to nm. Only use with super resolved images where the physical pixel size is set (CZI or OME-TIFF)""",
+    client = scripts.client('Ripley_Lfunction.py', """This script calculates the Ripley L function for OMERO ROIs on a 
+reconstructed super resolution image at a specific distance scale set by the user (`Max radius`).
+Do not use `Convert coordinates to nm` option on Zeiss data""",
 
     scripts.String("Data_Type", optional=False, grouping="01",
         description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
