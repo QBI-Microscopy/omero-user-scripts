@@ -356,8 +356,8 @@ def run_as_script():
     
     fileTypes = [k for k in FILE_TYPES.iterkeys()]
 
-    client = scripts.client('Get_Coordinates_in_ROI.py', """This script searches an attached SR dataset for coords defined by an ROI on a super resolved image. 
-Do not need to convert Zeiss data to nm. Only use with super resolved images where the physical pixel size is set (CZI or OME-TIFF).""",
+    client = scripts.client('Get_Coordinates_in_ROI.py', """Extract localisation coordinates within an OMERO ROI on a super
+resolved image. Do not use `Convert coordinates to nm` option on Zeiss data.""",
 
     scripts.String("Data_Type", optional=False, grouping="01",
         description="Choose source of images (only Image supported)", values=dataTypes, default="Image"),
