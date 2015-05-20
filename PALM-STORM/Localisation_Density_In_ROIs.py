@@ -354,7 +354,7 @@ def run_processing(conn,script_params):
                 np.savetxt(outfile, density, fmt='%-7.2f', delimiter=',', newline='\n')
                         
         new_file_ann, faMessage = script_util.createLinkFileAnnotation(
-            conn, file_name, image, output="Wrote near neighbour csv (Excel) file",
+            conn, file_name, image, output="Wrote localisation density csv (Excel) file",
             mimetype="text/csv", desc=None)
         if new_file_ann:
             file_anns.append(new_file_ann)
