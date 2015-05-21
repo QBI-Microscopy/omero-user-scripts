@@ -17,11 +17,14 @@ def run_processing(conn, script_params):
             message = 'Could not find specified image'
             return message
         
-        physical_z = script_params['Z_Pixel_Size']
-        if (image.getSizeZ() > 1.0) and (physical_z is None):
-            print 'size z:',image.getSizeZ()
-            message = 'Looks like you have a z-stack - you should set a non-zero value for Z_Pixel_Size'
-            return message
+        print 'size z:',image.getSizeZ()
+        physical_z = None
+        if (image.getSizeZ() > 1.0):
+            try:
+                physical_z = script_params['Z_Pixel_Size']
+            except:
+                message = 'Looks like you have a z-stack - you should set a non-zero value for Z_Pixel_Size'
+                return message
                 
             
         physical_x = script_params['X_Pixel_Size']
