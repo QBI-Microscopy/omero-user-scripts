@@ -128,6 +128,7 @@ def get_rectangles(conn, imageId):
         tStart = None
         tEnd = 0
         x = None
+        roi_id = roi.getId().getValue()
         for shape in roi.copyShapes():
             if type(shape) == omero.model.RectI:
                 # check t range and z range for every rectangle
@@ -149,7 +150,7 @@ def get_rectangles(conn, imageId):
                     print 'x,y,width,height:',x,y,width,height
         # if we have found any rectangles at all...
         if zStart is not None:
-            rois.append((x*physX, y*physY, width*physX, height*physY, zStart, zEnd, tStart, tEnd))
+            rois.append((x*physX, y*physY, width*physX, height*physY, zStart, zEnd, tStart, tEnd, roi_id))
 
     return rois
 
@@ -290,13 +291,14 @@ def process_data(conn,image,file_type,rectangles,coords):
                 locs_df = coords[c]
                 for t in range(sizeT):
                     coords_in_frames = locs_df[(locs_df[frame]>= starts[t]) & (locs_df[frame]<= stops[t])]
-                    yield get_coords_in_roi(coords_in_frames,rect,file_type)
+                    yield get_coords_in_roi(coords_in_frames,rect[:-1],file_type)
 
     coord_generator = coord_gen()
-    for r in range(len(rectangles)):
+    for rect in rectangles:
+        rid = rect[-1]
         for c in range(len(coords)):
             for t in range(sizeT):    
-                file_name = "Coords_ROI%s_Time%s_Channel%s.csv" % (r,t,c)
+                file_name = "Coords_ROI%s_Time%s_Channel%s.csv" % (rid,t,c)
                 with open(file_name,'w') as f:
                     locs_df = coord_generator.next()
                     locs_df.to_csv(f,sep=',',float_format='%8.2f',index=False,encoding='utf-8')
