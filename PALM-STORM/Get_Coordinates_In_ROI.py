@@ -304,7 +304,7 @@ def process_data(conn,image,file_type,rectangles,coords):
                     locs_df.to_csv(f,sep=',',float_format='%8.2f',index=False,encoding='utf-8')
             
                 new_file_ann, faMessage = script_util.createLinkFileAnnotation(
-                    conn, file_name, image, output="wrote coords file for ROI %s" %r,
+                    conn, file_name, image, output="wrote coords file for ROI %s" %rid,
                     mimetype="text/csv", desc=None)
                 message += faMessage
     return message
