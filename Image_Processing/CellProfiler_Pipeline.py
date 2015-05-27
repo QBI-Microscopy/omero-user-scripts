@@ -516,8 +516,7 @@ def run_processing(conn,scriptParams):
     robj = None
     
     # get the annotation id of the pipeline
-    pipelineId = scriptParams['AnnotationID']
-    pipeline = conn.getObject("Annotation",pipelineId)
+    pipeline = scriptParams['Pipeline']
     if not pipeline:
         message += 'Could not find specified annotation'
         return message
@@ -642,13 +641,53 @@ def validate_email(conn, params):
     # Validate with a regular expression. Not perfect but it will do
     return re.match("^[a-zA-Z0-9._%-]+@[a-zA-Z0-9._%-]+.[a-zA-Z]{2,6}$",
                     userEmail)
+                    
+def get_user_annotations(conn,ext):
+    params = omero.sys.ParametersI()
+    params.exp(conn.getUser().getId())  # only show current user's Datasets
+    datasets = conn.getObjects("Dataset", params=params)
+    annotations = []
+    annotation_names = []
+    for dataset in datasets:
+        print_obj(dataset, 2)
+        for dsAnn in dataset.listAnnotations():
+            if isinstance(dsAnn, omero.gateway.FileAnnotationWrapper):
+                print_obj(dsAnn.getFile(),4)
+                annotations.append(dsAnn)
+                annotation_names.append(dsAnn.getFile().getName())
+        for image in dataset.listChildren():
+            print_obj(image, 4)
+            for imAnn in image.listAnnotations():
+                if isinstance(imAnn, omero.gateway.FileAnnotationWrapper):
+                    print_obj(imAnn.getFile(),4)
+                    annotations.append(imAnn)
+                    annotation_names.append(imAnn.getFile().getName())
+    filtered_anns = [ann[0] for ann in zip(annotations,annotation_names) if ext in ann[1]]
+    filtered_names = [ann[1] for ann in zip(annotations,annotation_names) if ext in ann[1]]
+    return filtered_anns,filtered_names
+        
+def temporary_connection():
+    tempclient = omero.client()
+    omeroProperties = tempclient.getProperties().getPropertiesForPrefix('omero')
+    tempclient.closeSession()
+    # Configuration
+    HOST = omeroProperties.get('omero.host', 'localhost')
+    PORT = omeroProperties.get('omero.port', 4064)
+    USERNAME = omeroProperties.get('omero.user')
+    PASSWORD = omeroProperties.get('omero.pass')
+    temp_conn = BlitzGateway(USERNAME, PASSWORD, host=HOST, port=PORT)
+    connected = temp_conn.connect()
+    return temp_conn
+
     
 def runScript():
     """
     The main entry point of the script, as called by the client via the scripting
     service, passing the required parameters. 
     """
-       
+    temp_conn = temporary_connection()
+    anns,names = get_user_annotations(temp_conn,"cppipe")
+    
     dataTypes = [rstring("Dataset"),rstring("Image")]
     channels = [rstring("0"),rstring("1"),rstring("2"),rstring("3"),rstring("4")]
     mode = [rstring("Fluorescence"),rstring("Brightfield")]
@@ -666,8 +705,8 @@ server as an annotation. If the 'SaveImages' module is used, make sure to choose
     scripts.List("IDs", optional=False, grouping="2",
         description="List of Image IDs for each channel being processed").ofType(rlong(0)),
     
-    scripts.Int("AnnotationID", optional=False, grouping="3",
-        description="ID of cellprofiler pipeline to execute"),
+    scripts.Int("Pipeline", optional=False, grouping="3",values=names,
+        description="Cellprofiler pipeline to execute"),
                             
     scripts.String("Imaging_mode", optional=False, grouping="4",
         description="The imaging modality of the data to be analysed", values=mode, default="Fluorescence"),
@@ -709,6 +748,10 @@ server as an annotation. If the 'SaveImages' module is used, make sure to choose
         for key in client.getInputKeys():
             if client.getInput(key):
                 scriptParams[key] = client.getInput(key, unwrap=True)
+                # retrieve the index of the chosen pipeline from the names list
+                pipeIdx = names.index(scriptParams['Pipeline'])
+                # get the actual pipeline object at this index from the anns list
+                scriptParams['Pipeline'] = anns[pipeIdx]
         
         if scriptParams['Email_Results'] and not validate_email(conn, scriptParams):
             client.setOutput("Message", rstring("No valid email address"))
