@@ -265,7 +265,7 @@ def download_data(ann):
     
 def delete_downloaded_data(ann):
     file_path = os.path.join(PATH, ann.getFile().getName())
-    shutil.rmtree(file_path)
+    shutil.rmtree(PATH)
     
 def put_data_in_table(conn, imageIds, roiIds, neighbours, histogram, bins):
     columns = [

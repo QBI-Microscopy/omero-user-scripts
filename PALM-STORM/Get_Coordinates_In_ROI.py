@@ -243,7 +243,7 @@ def download_data(ann):
     
 def delete_downloaded_data(ann):
     file_path = os.path.join(PATH, ann.getFile().getName())
-    shutil.rmtree(file_path)
+    shutil.rmtree(PATH)
     
 def get_coords_in_roi(all_coords,roi,file_type):
     """

@@ -236,7 +236,7 @@ def delete_downloaded_data(ann):
     @param ann: the file annotation being deleted
     """     
     file_path = os.path.join(PATH, ann.getFile().getName())
-    shutil.rmtree(file_path)
+    shutil.rmtree(PATH)
     
 def process_data(conn,image,file_type,file_id,coords,sr_pix_size,nm_per_pixel):
     """

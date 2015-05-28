@@ -272,7 +272,7 @@ def download_data(ann):
     
 def delete_downloaded_data(ann):
     file_path = os.path.join(PATH, ann.getFile().getName())
-    shutil.rmtree(file_path)
+    shutil.rmtree(PATH)
          
 def process_data(conn,image,file_type,sizeC,rectangles,locs,radius):
     """
