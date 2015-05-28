@@ -704,7 +704,7 @@ def runScript():
     channels = [rstring("0"),rstring("1"),rstring("2"),rstring("3"),rstring("4")]
     mode = [rstring("Fluorescence"),rstring("Brightfield")]
     
-    client = scripts.client('ImageJ_Processing.py',
+    client = scripts.client('CellProfiler_Pipeline.py',
 """
 This script attempts to execute CellProfiler pipeline that has been saved to the 
 server as an annotation. If the 'SaveImages' module is used, make sure to choose 
