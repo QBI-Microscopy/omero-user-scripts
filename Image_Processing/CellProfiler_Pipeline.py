@@ -685,7 +685,7 @@ def get_user_annotations(extension='txt'):
                     annotations.append(imAnn)
                     annotation_names.append(imAnn.getFile().getName())
     filtered_anns = [ann[0] for ann in zip(annotations,annotation_names) if extension in ann[1]]
-    filtered_names = [rstring(ann[1]) for ann in zip(annotations,annotation_names) if extension in ann[1]]
+    filtered_names = [rstring("ID:"+str(ann[0].getId())+" "+ann[1]) for ann in zip(annotations,annotation_names) if extension in ann[1]]
     client.closeSession()
     return filtered_anns,filtered_names
 
