@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import shutil
 import time
 import numpy as np
 from random import random
@@ -271,10 +272,7 @@ def download_data(ann):
     
 def delete_downloaded_data(ann):
     file_path = os.path.join(PATH, ann.getFile().getName())
-    try:
-        os.remove(file_path)
-    except OSError:
-        pass
+    shutil.rmtree(file_path)
          
 def process_data(conn,image,file_type,sizeC,rectangles,locs,radius):
     """

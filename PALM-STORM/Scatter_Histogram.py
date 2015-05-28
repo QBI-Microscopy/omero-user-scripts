@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import shutil
 import time
 import numpy as np
 import pandas as pd
@@ -232,10 +233,7 @@ def delete_downloaded_data(ann):
     @param ann: the file annotation being deleted
     """       
     file_path = os.path.join(PATH, ann.getFile().getName())
-    try:
-        os.remove(file_path)
-    except OSError:
-        pass
+    shutil.rmtree(file_path)
     
 def get_coords_in_roi(all_coords,roi,file_type):
     """
