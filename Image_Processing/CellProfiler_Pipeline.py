@@ -15,6 +15,7 @@ import subprocess
 import shutil
 import tempfile
 import itertools
+from collections import defaultdict
 from tifffile import imread,imsave,TiffFile
 from PIL import Image
 from libtiff import TIFF
@@ -663,6 +664,12 @@ def temporary_connection():
     connected = temp_conn.connect()
     return temp_client,temp_conn
     
+def find_duplicate_annotations(mylist):
+    D = defaultdict(list)
+    for i,item in enumerate(mylist):
+        D[item].append(i)
+    return {k:v for k,v in D.items() if len(v)>1}
+    
 def get_user_annotations(extension='txt'):
     client,conn = temporary_connection()
     params = omero.sys.ParametersI()
@@ -686,6 +693,13 @@ def get_user_annotations(extension='txt'):
                     annotation_names.append(imAnn.getFile().getName())
     filtered_anns = [ann[0] for ann in zip(annotations,annotation_names) if extension in ann[1]]
     filtered_names = [rstring("ID:"+str(ann[0].getId())+" "+ann[1]) for ann in zip(annotations,annotation_names) if extension in ann[1]]
+    duplicates = find_duplicate_annotations(filtered_names)
+    for k,v in duplicates.iteritems():
+        dups = v[1:]
+        for d in dups:
+            filtered_anns.pop(d)
+            filtered_names.pop(d)
+        
     client.closeSession()
     return filtered_anns,filtered_names
 
