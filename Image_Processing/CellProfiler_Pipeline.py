@@ -30,6 +30,18 @@ ADMIN_EMAIL = 'admin@omerocloud.qbi.uq.edu.au'
 input_dir = ''
 output_dir = ''
 
+def print_obj(obj, indent=0):
+    """
+    Helper method to display info about OMERO objects.
+    Not all objects will have a "name" or owner field.
+    """
+    print """%s%s:%s  Name:"%s" (owner=%s)""" % (
+        " " * indent,
+        obj.OMERO_CLASS,
+        obj.getId(),
+        obj.getName(),
+        obj.getOwnerOmeName())
+
 def get_rects_from_rois(conn, imageId):
     """ 
     Returns a list of (x, y, width, height), one for each ROI with rectangle shape
