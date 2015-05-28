@@ -748,7 +748,6 @@ server as an annotation. If the 'SaveImages' module is used, make sure to choose
         for key in client.getInputKeys():
             if client.getInput(key):
                 scriptParams[key] = client.getInput(key, unwrap=True)
-                print scriptParams
                 
         #retrieve the index of the chosen pipeline from the names list
         pipeIdx = names.index(rstring(scriptParams['Pipeline']))
