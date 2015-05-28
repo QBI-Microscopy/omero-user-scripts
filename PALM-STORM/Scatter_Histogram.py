@@ -233,7 +233,7 @@ def delete_downloaded_data(ann):
     @param ann: the file annotation being deleted
     """       
     file_path = os.path.join(PATH, ann.getFile().getName())
-    shutil.rmtree(file_path)
+    shutil.rmtree(PATH)
     
 def get_coords_in_roi(all_coords,roi,file_type):
     """
