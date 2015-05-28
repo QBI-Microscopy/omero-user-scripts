@@ -12,6 +12,7 @@ import re
 import sys
 import glob
 import subprocess
+import shutil
 import tempfile
 import itertools
 from tifffile import imread,imsave,TiffFile
@@ -623,12 +624,8 @@ def run_processing(conn,scriptParams):
         image_ids = scriptParams['IDs']
         email_results(conn,scriptParams,image_ids,results_files)
                
-#     try:
-#         os.remove(input_dir)
-#         os.remove(output_dir)
-#         print('deleted all temporary folders')
-#     except OSError:
-#         pass
+    shutil.rmtree(input_dir)
+    shutil.rmtree(output_dir)
     return robj, message  
     
 def validate_email(conn, params):
