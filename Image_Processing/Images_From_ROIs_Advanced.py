@@ -211,7 +211,7 @@ def get_rects_from_rois(conn, imageId):
     parent_image = conn.getObject("Image",imageId)
     sizeX = parent_image.getSizeX()
     sizeY = parent_image.getSizeY()
-    
+    print "image size x, y: ", sizeX,sizeY
     rects = []
     polygons = []
     for roi in result.rois:
@@ -233,7 +233,11 @@ def get_rects_from_rois(conn, imageId):
                     x = sizeX
                 if y > sizeY:
                     y = sizeY
-                    
+                if (x + w) > sizeX:
+                    w = sizeX - x
+                if (y + h) > sizeY:
+                    h = sizeY - y
+                print "roi x, y, w, h: ",x,y,w,h    
                 rects.append( (x,y,w,h,roi_id,name) )
                 break    # Only use the first Rect we find per ROI 
             if name == 'PolygonI':
@@ -252,7 +256,11 @@ def get_rects_from_rois(conn, imageId):
                     x = sizeX
                 if y > sizeY:
                     y = sizeY
-                    
+                if (x + w) > sizeX:
+                    w = sizeX - x
+                if (y + h) > sizeY:
+                    h = sizeY - y
+                print "roi x, y, w, h: ",x,y,w,h     
                 rects.append( (x,y,w,h,roi_id,name) )
                 polygons.append(poly)
                 break         
