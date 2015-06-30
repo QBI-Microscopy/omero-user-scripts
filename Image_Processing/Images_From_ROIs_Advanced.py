@@ -208,7 +208,10 @@ def get_rects_from_rois(conn, imageId):
     # Using the underlying ROI service & omero.model objects (no ROI support in Blitz Gateway yet)
     roiService = conn.getRoiService()
     result = roiService.findByImage(imageId, None)
-
+    parent_image = conn.getObject("Image",imageId)
+    sizeX = parent_image.getSizeX()
+    sizeY = parent_image.getSizeY()
+    
     rects = []
     polygons = []
     for roi in result.rois:
@@ -221,6 +224,16 @@ def get_rects_from_rois(conn, imageId):
                 y = shape.getY().getValue()
                 w = shape.getWidth().getValue()
                 h = shape.getHeight().getValue()
+                
+                if x < 0:
+                    x = 0
+                if y < 0:
+                    y = 0
+                if x > sizeX:
+                    x = sizeX:
+                if y > sizeY:
+                    y = sizeY
+                    
                 rects.append( (x,y,w,h,roi_id,name) )
                 break    # Only use the first Rect we find per ROI 
             if name == 'PolygonI':
@@ -230,9 +243,20 @@ def get_rects_from_rois(conn, imageId):
                 y = rect[0][1]
                 w = rect[1][0] - rect[0][0]
                 h = rect[1][1] - rect[0][1] 
+                
+                if x < 0:
+                    x = 0
+                if y < 0:
+                    y = 0
+                if x > sizeX:
+                    x = sizeX:
+                if y > sizeY:
+                    y = sizeY
+                    
                 rects.append( (x,y,w,h,roi_id,name) )
                 polygons.append(poly)
-                break          
+                break         
+                 
     return rects, polygons
 
 def create_containers(conn, dataset, project=None):
