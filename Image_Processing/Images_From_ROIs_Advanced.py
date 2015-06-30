@@ -252,7 +252,7 @@ def get_rects_from_rois(conn, imageId):
                     x = sizeX
                 if y > sizeY:
                     y = sizeY
-                    
+                print "roi x, y, w, h: ",x,y,w,h     
                 rects.append( (x,y,w,h,roi_id,name) )
                 polygons.append(poly)
                 break         
