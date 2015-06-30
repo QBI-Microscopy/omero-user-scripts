@@ -249,7 +249,7 @@ def get_rects_from_rois(conn, imageId):
                 if y < 0:
                     y = 0
                 if x > sizeX:
-                    x = sizeX:
+                    x = sizeX
                 if y > sizeY:
                     y = sizeY
                     
