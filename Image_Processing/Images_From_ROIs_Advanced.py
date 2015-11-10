@@ -87,7 +87,7 @@ Format:
     smtpObj.sendmail(ADMIN_EMAIL, [params['Email_address']], msg.as_string())
     smtpObj.quit()    
     
-def run_clearing(conn, session, image, input_path, originx, originy):
+def run_clearing(conn, session, image, input_path, originx, originy, bg):
     """
     Run 'Clear Outside' in Fiji
 
@@ -115,7 +115,7 @@ from loci.formats import MetadataTools
 from ome.xml.meta import OMEXMLMetadata
 
 file = "/fiji/input/%s"
-
+bg = %d
 options = ImporterOptions()
 options.setId(file)
 imps = BF.openImagePlus(options)
@@ -165,16 +165,15 @@ for p in range(planes.getSize()):
 
     # get the plane
     plane = planes.getProcessor(p+1)
-    
+    plane.setColor(bg) 
     # fill outside
     plane.fillOutside(proi)
-    
     pixels = plane.convertToByte(True).getPixels()
     writer.saveBytes(p,pixels)
     
 reader.close() 
 writer.close()
-imp.flush()""" % (image_name,originx,originy,image_name)
+imp.flush()""" % (image_name,bg,originx,originy,image_name)
 
     script = "clearing.py"
     script_path = input_dir + "/%s"%script
@@ -417,13 +416,16 @@ def process_image(conn, parent_id, script_params, session):
         box = r[:-1]
         child_name ='ImageID%s_ROI%s.ome.tif'%(parent_image.getId(),rid)
         child_path = os.path.join(input_dir,child_name)
-        
+        bgColor = script_params['Background_Color']
+        bg = 0    
         if script_params['Clear_Outside_Polygon'] and ('PolygonI' in shape):
             exporter = OMEExporter(conn,parent_image,input_dir,child_name,\
                                    box,theC=channels,ROI=polys)
             exporter.generate()
+            if ('Bright' in bgColor):
+                bg = 255
             child_path = run_clearing(conn, session, parent_image, \
-                                      child_path, xbox, ybox)
+                                      child_path, xbox, ybox, bg)
         elif ('PolygonI' in shape):
             # retain the PolygonI in the metadata
             exporter = OMEExporter(conn,parent_image,input_dir,child_name,\
@@ -610,7 +612,7 @@ def runScript():
     """
        
     dataTypes = [rstring("Dataset"),rstring("Image")]
-    
+    bgTypes = [rstring("Darkfield"),rstring("Brightfield")] 
     client = scripts.client('Images_From_ROIs_Advanced.py',"""A script for making new
 images from ROIs on a parent image. The ROI can be a rectangle or polygon and it is 
 possible to clear the region outside a polygon ROI. This is replacement of the built-in
@@ -630,7 +632,11 @@ creation of arbitrary shaped regions.
     scripts.Bool(
         "Clear_Outside_Polygon", grouping="3", default=False,
         description="Cleared area outside of polygon ROI?"),
-    
+
+    scripts.String(
+        "Background_Color", grouping="3.1", default="Darkfield",
+        description="Background fill colour", values=bgTypes),
+ 
     scripts.Bool(
         "Select_Channels", grouping="4", default=False,
         description="Specify channels?"),
@@ -682,4 +688,4 @@ creation of arbitrary shaped regions.
         client.closeSession()
 
 if __name__ == "__main__":
-    runScript()
+    runScript()
