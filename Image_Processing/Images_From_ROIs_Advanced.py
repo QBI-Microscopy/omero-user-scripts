@@ -527,12 +527,12 @@ def run_processing(conn, session, script_params):
             images += ds.listChildren()
 
     # Check for rectangular ROIs and filter images list
-    images = [image for image in images if (image.getROICount("Rect") > 0) or (image.getROICount("Polygon") > 0)]
+    images = [image for image in images if (image.getROICount("Rectangle") > 0) or (image.getROICount("Polygon") > 0)]
     if not images:
         message += "No Rectangle or Polygon ROI found."
         return None, message
 
-    total_rects = sum([i.getROICount("Rect") for i in images])
+    total_rects = sum([i.getROICount("Rectangle") for i in images])
     total_polys = sum([i.getROICount("Polygon") for i in images])
     if total_rects + total_polys > 10:
         message += "Cannot start batch processing - too many rois (maximum is 10)."
@@ -688,4 +688,5 @@ creation of arbitrary shaped regions.
         client.closeSession()
 
 if __name__ == "__main__":
-    runScript()
+    runScript()
+
