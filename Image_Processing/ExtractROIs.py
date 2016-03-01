@@ -262,29 +262,32 @@ def getShapes(conn, imageId, image):
                 shape['height'] = height
             elif type(s) == omero.model.EllipseI:
                 print "Found Ellipse: " + shape['ROIlabel']
-                shape['type'] = 'Ellipse'
-                shape['cx'] = s.getCx().getValue()
-                shape['cy'] = s.getCy().getValue()
-                shape['rx'] = s.getRx().getValue()
-                shape['ry'] = s.getRy().getValue()
+                #Get bounding box dimensions
                 x, y, width, height = getBoundDimensions(s)
-                shape['bbox'] = (x, y, width, height, zStart, zEnd, tStart, tEnd)
+                if (width > 0 and height > 0):
+                    shape['bbox'] = (x, y, width, height, zStart, zEnd, tStart, tEnd)
+                    shape['type'] = 'Ellipse'
+                    shape['cx'] = s.getCx().getValue()
+                    shape['cy'] = s.getCy().getValue()
+                    shape['rx'] = s.getRx().getValue()
+                    shape['ry'] = s.getRy().getValue()
                 #Create mask - reverse axes for numpy
                 #mask = getPolygonMask(s, image)
                 #maskroi= mask[y:height+y,x:width+x]
                 shape['maskroi'] = 1 
             elif type(s) == omero.model.PolygonI:
-                shape['type'] = 'Polygon'
+                
                 x, y, width, height = getBoundDimensions(s)
-                shape['bbox'] = (x, y, width, height, zStart, zEnd, tStart, tEnd)
-                #mask = getPolygonMask(s, image)
-                #maskroi= mask[y:height+y,x:width+x]
-                shape['maskroi'] = 1 
-            elif type(s) in (
-                    omero.model.PointI, omero.model.LineI, omero.model.MaskI, omero.model.LabelI):
+                if (width > 0 and height > 0):
+                    shape['bbox'] = (x, y, width, height, zStart, zEnd, tStart, tEnd)
+                    shape['maskroi'] = 1 
+                    shape['type'] = 'Polygon'
+            else:
                 print type(s), " Not supported by this script"
+                shape={}
 
-            rois.append(shape)
+            if (shape):
+                rois.append(shape)
 
     return rois
 
@@ -301,14 +304,18 @@ def processImage(conn, image, parameterMap, datasetid=None):
     tagname = parameterMap['Use_ROI_label']
     
     imageId = image.getId()
+    
     # Extract ROI shapes from image
     rois = getShapes(conn, imageId, image)
     iIds = []
     firstimage = None
     datasetdescription = ""
+    roilimit = conn.getRoiLimitSetting()
+    print "ROI limit = ", roilimit
     if len(rois) > 0:
         #Constants
-        maxw = 4096 # MAX tiles under 4096
+        maxw = conn.getMaxPlaneSize()[0]
+        print "Max plane size = ", maxw
         omeroToNumpy = {'int8': 'int8', 'uint8': 'uint8',
                         'int16': 'int16', 'uint16': 'uint16',
                         'int32': 'int32', 'uint32': 'uint32',
@@ -317,22 +324,16 @@ def processImage(conn, image, parameterMap, datasetid=None):
         imgW = image.getSizeX()
         imgH = image.getSizeY()
         print "ID: %s \nImage size: %d x %d " % (imageId, imgW, imgH)
-        #largeimg = None #Use as a flag
-#==============================================================================
-#         if (imgW + imgH <= maxw * 2):
-#             plane = pixels.getPlane(0,0,0)        
-#             tile_max = float(plane.max())    
-#             tile_min = float(plane.min())
-#         else:
-#             tile_max = 255
-#             tile_min = 0
-#==============================================================================
-               
+                
         imageName = image.getName()
+        
         updateService = conn.getUpdateService()    
         pixelsService = conn.getPixelsService()
         queryService = conn.getQueryService()
         renderService = conn.getRenderingSettingsService()
+       # rawPixelsStore = conn.c.sf.createRawPixelsStore()
+       # containerService = conn.getContainerService()
+        
         print "Connection: Got services..."
         
         pixels = image.getPrimaryPixels()
@@ -348,8 +349,8 @@ def processImage(conn, image, parameterMap, datasetid=None):
                 "with dtype: %s" % imgPtype)
         # uint8 = [0,255], uint16 = [0,65535],  [-32767,32768] for int16
         whites = {'uint8':255, 'int8':255, 'uint16': 65535, 'int16': 32768}
-        tile_max = whites[imgPtype]
-        tile_min = 0.0 
+      #  tile_max = whites[imgPtype]
+      #  tile_min = 0.0 
         if (bgcolor == 'White'):
             if (imgPtype in whites):
                 bgcolor = whites[imgPtype]
@@ -446,7 +447,7 @@ def processImage(conn, image, parameterMap, datasetid=None):
                     p[m1] = bgcolor
                             
                # return p.tobytes() # numpy 1.9 +
-                return p.tostring() # numpy 1.8-
+                return p.min(),p.max(),p.tostring() # numpy 1.8-
               
             # Set image name for new image
             (imageName,ext) = path.splitext(image.getName())
@@ -481,6 +482,7 @@ def processImage(conn, image, parameterMap, datasetid=None):
                 newImg = conn.getObject("Image", iId)
                 pid = newImg.getPixelsId()
                 print "New Image pid: ", pid
+           #     rawPixelsStore.setPixelsId(pid, True, conn.SERVICE_OPTS)
                 #print "New Image Id = %s" % newImg.getId()
                 convertToType = getattr(np, omeroToNumpy[imgPtype])
                 print "type=", convertToType
@@ -488,6 +490,8 @@ def processImage(conn, image, parameterMap, datasetid=None):
                 tileList = list(pixels.getTiles(zctTileList))
                 print "Size of tilelist=", len(tileList)
                 print "Size of masklist=", len(maskList)
+                channelsMinMax = []
+                
                 class Iteration(omero.util.tiles.TileLoopIteration):
                 
                     def run(self, data, z, c, t, x, y, tileWidth, tileHeight, tileCount):
@@ -496,7 +500,16 @@ def processImage(conn, image, parameterMap, datasetid=None):
                         " y=", y, " w=", tileWidth, " h=", tileHeight, \
                         " tcnt=", tileCount
                         #Get pixel data from image to load into these coords                    
-                        tile2d = getImageTile(tileCount)
+                        minValue,maxValue,tile2d = getImageTile(tileCount)
+                        
+                        # first plane of each channel
+                        if len(channelsMinMax) < (c + 1):
+                            channelsMinMax.append([minValue, maxValue])
+                        else:
+                            channelsMinMax[c][0] = min(
+                                channelsMinMax[c][0], minValue)
+                            channelsMinMax[c][1] = max(
+                                channelsMinMax[c][1], maxValue)
                         print "generated tile2d ...setting data"
                         data.setTile(tile2d, z, c, t, x, y, tileWidth, tileHeight)
                         
@@ -506,9 +519,9 @@ def processImage(conn, image, parameterMap, datasetid=None):
                 loop = omero.util.tiles.RPSTileLoop(conn.c.sf, omero.model.PixelsI(pid, False))
                 times = loop.forEachTile(tileWidth, tileHeight, Iteration())            
                 print times, " loops"
-                c = 0
-                pixelsService.setChannelGlobalMinMax(
-                        pid, c, tile_min, tile_max, conn.SERVICE_OPTS)
+                for theC, mm in enumerate(channelsMinMax):
+                    pixelsService.setChannelGlobalMinMax(
+                        pid, theC, float(mm[0]), float(mm[1]), conn.SERVICE_OPTS)
                                 
             else:
                 # Use this method for smaller images/tiles 
@@ -562,7 +575,9 @@ def processImage(conn, image, parameterMap, datasetid=None):
         
         print "Applying rendering settings"
         renderService.applySettingsToSet(image.getId(), 'Image', iIds)
-        renderService.applySettingsToSet(image.getPrimaryPixels().getId(), 'Pixels', iIds)
+        #renderService.applySettingsToSet(image.getPrimaryPixels().getId(), 'Pixels', iIds)
+        #containerService.getImages(
+        #        "Image", [imageId], None, self.SERVICE_OPTS)[0], convertToType
         
     else:
         print "ERROR: No new images created from Image ID %d." % image.getId()
@@ -681,21 +696,21 @@ def runAsScript():
     client = scripts.client(
         'Extract ROIs',
         """Extract Images from the regions defined by ROIs. \
-        Updated script - Jan 2016
+        Updated script: 29 Feb 2016
         Accepts: Rectangle, Ellipse, Polygon Shapes \
 
         Outputs: Multiple ROIs produced as separate images with option to use ROI labels in filenames and tags \
         
         Replaces: Images from ROIs (Advanced) 
 
-        Limitations:  Thumbnails not rendering properly on large ROIs (under development)
+        Limitations:  Images from large ROIs (>12K x 12K px) cannot be exported (under development)
 
 """,
 
         scripts.String(
             "Data_Type", optional=False, grouping="1",
-            description="Choose Images via their 'Dataset' or directly by "
-            " 'Image' IDs.", values=dataTypes, default="Image"),
+            description="Select a 'Dataset' of images or specific images with these IDs", 
+                values=dataTypes, default="Image"),
 
         scripts.List(
             "IDs", optional=False, grouping="2",
@@ -708,16 +723,18 @@ def runAsScript():
             default="ExtractedROIs"),
 
         scripts.Bool(
-            "Clear_Outside_Polygon", grouping="4", default=False,
-            description="Cleared area outside of polygon ROI?"),
-
-        scripts.String(
-            "Background_Color", grouping="4.1", default="Black",
-            description="Background fill colour", values=bgTypes),
+            "Use_ROI_label", grouping="4", default=False,
+            description="Use ROI labels in filename and as tag"),
         
         scripts.Bool(
-            "Use_ROI_label", grouping="5", default=False,
-            description="Use ROI labels in filename and as tag"),
+            "Clear_Outside_Polygon", grouping="5", default=False,
+            description="Clear area outside of polygon ROI (default is black)"),
+
+        scripts.String(
+            "Background_Color", grouping="5.1", default="Black",
+            description="Background fill colour", values=bgTypes),
+        
+        
 
         version="1.0",
         authors=["Liz Cooper-Williams", "QBI Software"],
