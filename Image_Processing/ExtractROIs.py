@@ -109,7 +109,8 @@ def getBoundDimensions(shape):
         height = max(yc) - min(yc)        
 
     return X, Y, width, height
-    
+
+ 
 """ Get a mask for the shape (ellipse or polygon)
     Input: omero.model.shape, omero.image
     Output: mask of same dimensions as original image - crop as required
@@ -199,7 +200,25 @@ def getOffsetPolyMaskTile(shape, pos_x, pos_y, tW, tH):
     mask = pth.contains_points(xypix)
     mask = mask.reshape(tH, tW)
     return ~mask
+
+def hasPoints(shape):
+    rtn = False
     
+    if (type(shape) == omero.model.EllipseI):  
+        if shape.getRx().getValue() > 0:
+            rtn = True
+    elif type(shape) == omero.model.RectangleI:
+        if shape.getWidth().getValue() > 0:
+            rtn = True
+    elif type(shape) == omero.model.PolygonI:
+        pts = getPolygonPoints(shape)
+        #print "Shape getPoints:", pts[0]
+        if len(pts[0]) > 2:
+            rtn = True        
+    if (not rtn):
+        print "Skipping ROI as it is empty:" , shape.getId().getValue()
+        
+    return rtn
     
 """ getShapes
     Input: active connection, image id
@@ -222,9 +241,9 @@ def getShapes(conn, imageId, image):
         tEnd = 0
         x = None
         for i,s in enumerate(roi.copyShapes()): #omero.model
-            # ignore locked rois
-            #if (s.getLocked() != None):
-            #    next
+            #ignore empty ROIs
+            if (not hasPoints(s)):
+                continue
             shape = {}
             shape['id'] = int(s.getId().getValue())
             shape['theT'] = int(s.getTheT().getValue())
@@ -264,13 +283,12 @@ def getShapes(conn, imageId, image):
                 print "Found Ellipse: " + shape['ROIlabel']
                 #Get bounding box dimensions
                 x, y, width, height = getBoundDimensions(s)
-                if (width > 0 and height > 0):
-                    shape['bbox'] = (x, y, width, height, zStart, zEnd, tStart, tEnd)
-                    shape['type'] = 'Ellipse'
-                    shape['cx'] = s.getCx().getValue()
-                    shape['cy'] = s.getCy().getValue()
-                    shape['rx'] = s.getRx().getValue()
-                    shape['ry'] = s.getRy().getValue()
+                shape['bbox'] = (x, y, width, height, zStart, zEnd, tStart, tEnd)
+                shape['type'] = 'Ellipse'
+                shape['cx'] = s.getCx().getValue()
+                shape['cy'] = s.getCy().getValue()
+                shape['rx'] = s.getRx().getValue()
+                shape['ry'] = s.getRy().getValue()
                 #Create mask - reverse axes for numpy
                 #mask = getPolygonMask(s, image)
                 #maskroi= mask[y:height+y,x:width+x]
@@ -278,17 +296,16 @@ def getShapes(conn, imageId, image):
             elif type(s) == omero.model.PolygonI:
                 
                 x, y, width, height = getBoundDimensions(s)
-                if (width > 0 and height > 0):
-                    shape['bbox'] = (x, y, width, height, zStart, zEnd, tStart, tEnd)
-                    shape['maskroi'] = 1 
-                    shape['type'] = 'Polygon'
+                shape['bbox'] = (x, y, width, height, zStart, zEnd, tStart, tEnd)
+                shape['maskroi'] = 1 
+                shape['type'] = 'Polygon'
             else:
                 print type(s), " Not supported by this script"
                 shape={}
 
             if (shape):
                 rois.append(shape)
-
+    print "ROIS loaded:", len(rois)
     return rois
 
     
@@ -719,7 +736,7 @@ def runAsScript():
 
         scripts.String(
             "Container_Name", grouping="3",
-            description="Put Images in new Dataset with this name or leave blank for same as parent",
+            description="Put Images in new Dataset with this name",
             default="ExtractedROIs"),
 
         scripts.Bool(
@@ -781,7 +798,7 @@ def runAsTest():
         print "Succesfully Connected to ", host    
     printDuration(False)    # start timer
     parameterMap ={'Data_Type' :'Image', 
-                   'IDs': [632],
+                   'IDs': [8],
                    'Container_Name': 'ROIs',
                    'Clear_Outside_Polygon': True,
                    'Background_Color': 'White' ,
