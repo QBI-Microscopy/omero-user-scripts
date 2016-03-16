@@ -39,7 +39,7 @@ images with the regions within the ROIs, and saves them back to the server.
 import omero.model
 import omero.scripts as scripts
 from omero.gateway import BlitzGateway
-from omero.rtypes import rstring, rlong, robject, rint, rfloat
+from omero.rtypes import rstring, rlong, robject
 import omero.util.script_utils as script_utils
 import omero.util.tiles
 from os import path
@@ -49,6 +49,7 @@ import numpy as np
 from matplotlib.path import Path
 import re
 import time
+
 startTime = 0
 
 
@@ -225,8 +226,7 @@ def hasPoints(shape):
     Output: Returns a structure containing flexible shape variables eg shape['width']
     including a list of bounding box dimensions 
     (x, y, width, height, zStart, zStop, tStart, tStop) as shape['bbox']
-    for each ROI shape in the image
-    """
+    for each ROI shape in the imag    """
 def getShapes(conn, imageId, image):
     rois = []
     #image = conn.getObject("Image", imageId)
@@ -331,7 +331,7 @@ def processImage(conn, image, parameterMap, datasetid=None):
     print "ROI limit = ", roilimit
     if len(rois) > 0:
         #Constants
-        maxw = conn.getMaxPlaneSize()[0]
+        maxw = conn.getMaxPlaneSize()[0] - 100
         print "Max plane size = ", maxw
         omeroToNumpy = {'int8': 'int8', 'uint8': 'uint8',
                         'int16': 'int16', 'uint16': 'uint16',
@@ -469,10 +469,10 @@ def processImage(conn, image, parameterMap, datasetid=None):
             # Set image name for new image
             (imageName,ext) = path.splitext(image.getName())
             if (tagname and len(r['ROIlabel']) > 0):
-                imageName = imageName + '_'+ r['ROIlabel'] + ext
+                imageName = imageName + '_'+ r['ROIlabel'] # + ext
             else:
                 roid = r['id']
-                imageName = imageName + '_'+ str(roid) + ext
+                imageName = imageName + '_'+ str(roid) # + ext
                 #DONT CREATE TAGS
                 tagname = None
             # Add a description for the image
@@ -539,7 +539,7 @@ def processImage(conn, image, parameterMap, datasetid=None):
                 for theC, mm in enumerate(channelsMinMax):
                     pixelsService.setChannelGlobalMinMax(
                         pid, theC, float(mm[0]), float(mm[1]), conn.SERVICE_OPTS)
-                                
+                
             else:
                 # Use this method for smaller images/tiles 
                 print "Generating new image from NumpySeq"
@@ -569,16 +569,14 @@ def processImage(conn, image, parameterMap, datasetid=None):
                 if (link is not None):
                     print "New image linked to dataset"
                 else:
-                    print "ERROR: New image dataset link failed"
-                    
+                    print "ERROR: New image dataset link failed: now its an orphan"
+               
                 
                 # for return - just one           
                 if firstimage is None:
                    firstimage = newImg._obj
                    print "Setting first image"
-                   #datasetdescription = "Images in this Dataset are from ROIs of parent Image:\n"\
-                   #    "  Name: %s\n  Image ID: %d" % (image.getName(), image.getId()) 
-                
+                                   
                 #BUG IN createImageFromNumpy doesn't save description - try again here  - OK
                 if (len(newImg.getDescription()) <=0):
                     newImg = conn.getObject("Image", newImg.getId())
@@ -592,9 +590,6 @@ def processImage(conn, image, parameterMap, datasetid=None):
         
         print "Applying rendering settings"
         renderService.applySettingsToSet(image.getId(), 'Image', iIds)
-        #renderService.applySettingsToSet(image.getPrimaryPixels().getId(), 'Pixels', iIds)
-        #containerService.getImages(
-        #        "Image", [imageId], None, self.SERVICE_OPTS)[0], convertToType
         
     else:
         print "ERROR: No new images created from Image ID %d." % image.getId()
@@ -691,7 +686,7 @@ def makeImagesFromRois(conn, parameterMap):
         
             
     if link is None:
-        message += " - unable to link to parent project"
+        message += " - unable to link to parent project: look in orphaned"
     if (len(notfound) > 0):
         message += " - ids not found: %s" % notfound
     message += "."
@@ -720,7 +715,7 @@ def runAsScript():
         
         Replaces: Images from ROIs (Advanced) 
 
-        Limitations:  Images from large ROIs (>12K x 12K px) cannot be exported (under development)
+        Limitations:  Images from large ROIs (>12K x 12K px) cannot be exported (OMERO Limitation)
 
 """,
 
@@ -798,7 +793,7 @@ def runAsTest():
         print "Succesfully Connected to ", host    
     printDuration(False)    # start timer
     parameterMap ={'Data_Type' :'Image', 
-                   'IDs': [8],
+                   'IDs': [632],
                    'Container_Name': 'ROIs',
                    'Clear_Outside_Polygon': True,
                    'Background_Color': 'White' ,
