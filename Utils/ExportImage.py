@@ -109,7 +109,7 @@ def createZipFile(target, filelist):
     @param base:        Name of folder that we want to zip up E.g. "folder"
     """
     base = path.dirname(filelist[0])    
-    zip_file = zipfile.ZipFile(target, 'w')
+    zip_file = zipfile.ZipFile(target, mode='w', allowZip64 = True)
     message = ""
     try:
         files = path.join(base, "*")        
@@ -195,13 +195,14 @@ def runAsScript():
     dataTypes = [rstring('Dataset'), rstring('Image')]
     formatTypes = [rstring('TIFF'), rstring('PNG'), rstring('JPEG')]
     client = scripts.client(
-        'Simple Images Exporter',
-        """Can export Images larger than 12px x 12px \
-        Updated script: 15 Mar 2016
+        'Large Images Exporter',
+        """Can export Images larger than 12000 x 12000px \
+        
+        Updated script: 15 Mar 2016 \
         
         Accepts: Image Ids, Dataset Id \
         
-        Supports: TIFF, PNG and JPEG only at this stage \
+        Supports: TIFF, PNG and JPEG formats \
         
         Outputs: Zipfile of images to download \
         
@@ -287,7 +288,7 @@ def runAsTest():
         print message
         if robj is not None:
             #print robject(robj)
-            print "Robj is OK"
+            print "Run status OK"
 
         
     finally:

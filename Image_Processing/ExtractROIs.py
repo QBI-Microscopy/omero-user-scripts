@@ -681,6 +681,10 @@ def makeImagesFromRois(conn, parameterMap):
     message += "Created %d new images" % len(newImages)
     if (datasetid is None):
         message += " in parent dataset"
+    elif len(newImages) == 0:
+        #remove empty dataset
+        h = conn.deleteObjects("Dataset", [datasetid], deleteAnns=True, deleteChildren=False)
+        message += " no images so removing dataset"
     else:
         message += " in new dataset %s" % datasetName
         
@@ -706,16 +710,20 @@ def runAsScript():
     bgTypes = [rstring("Black"),rstring("White")]
         
     client = scripts.client(
-        'Extract ROIs',
+        'Extract ROIs for all Images',
         """Extract Images from the regions defined by ROIs. \
         Updated script: 29 Feb 2016
-        Accepts: Rectangle, Ellipse, Polygon Shapes \
-
-        Outputs: Multiple ROIs produced as separate images with option to use ROI labels in filenames and tags \
         
-        Replaces: Images from ROIs (Advanced) 
+        Accepts: Rectangle, Ellipse, Polygon Shapes 
+        
+        Supports: All image sizes including large images \
+        >12000 x 12000 px 
 
-        Limitations:  Images from large ROIs (>12K x 12K px) cannot be exported (OMERO Limitation)
+        Outputs: Multiple ROIs produced as separate images with option to use \ ROI labels in filenames and tags
+        
+        Replaces: Images from ROIs scripts (also Advanced)
+
+        Note:  Resulting Large Images can be exported via QBI->Utils->ExportImage
 
 """,
 
